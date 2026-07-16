@@ -1,34 +1,27 @@
-## 3.1.0 - 2026-06-04
+## 3.1.0 - 2026-07-16
 
-### Added
+### Cleanup
 
-- Full TypeScript migration: 41 source files converted from JavaScript (JSDoc) to TypeScript with strict types.
-- TypeScript interfaces for all core contracts (13 interfaces + 5 type aliases in src/types.ts).
-- tsconfig.json with strict mode, NodeNext module resolution, ES2022 target.
-- tsx as dev dependency for running tests with TypeScript support.
-- Build pipeline updated: tsc --outDir dist replaces simple copy (build.mjs).
-- Type-safe APIs for all checkers, reporters, and CLI commands.
-- CheckResult.severity?: CheckerSeverity field added for SARIF reporter compatibility.
-- ProjectContext interface exported from BaseChecker for plugin authors.
+- `cqc` binary removed — `cq` is now the sole CLI command.
+- All references to `cqc` in source, docs, CI templates, and tests migrated to `cq`.
+- Environment variables renamed: `CQC_*` → `CQ_*` (backward compat fallback kept).
+- Internal log prefixes changed: `[cqc:ai]` → `[cq:ai]`, `[cqc]` → `[cq]`.
+- `.github/workflows/cqc-analysis.yml` renamed to `cq-analysis.yml`.
+- `cq` root wrapper fixed to point to `dist/scripts/cli.js`.
+- `package.json` `bin.cqc` entry removed.
 
 ### Fixed
 
-- SecretChecker.exec() call had wrong signature (array was passed as command). Fixed to match BaseChecker.exec() signature: this.exec(context, "git", ["show", ...]).
-- cqc binary alias was missing from project root â€” added.
-
-### Changed
-
-- Package entry point: main â†’ dist/scripts/cli.js, bin â†’ dist/scripts/cli.js.
-- Published package now ships only dist/, cq, cqc, README.md, LICENSE.
-- All 42 .js shims removed after successful TypeScript compilation validation.
-- tsconfig.json: allowJs set to false after migration completion.
+- `readProjectPackageFile()` now strips UTF-8 BOM from `package.json` before parsing, preventing JSON parse crashes on BOM-emitting editors.
+- `cq menu` no longer hangs in non-TTY environments — graceful exit with usage hint.
 
 ### Validation
 
-- npx tsc --noEmit â€” 0 errors
-- npm test â€” 180/180 pass
-- npm run build â€” dist/ OK
-- npm pack --dry-run â€” 184 files, 82.2 kB
+- `pnpm run build` — OK
+- `pnpm test` — 185/185 pass
+- `tsc --noEmit` — 0 errors
+- `node cq status` — functional test OK
+
 # Changelog
 
 ## 3.0.5 - 2026-05-31
