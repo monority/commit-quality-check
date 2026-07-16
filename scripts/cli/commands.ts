@@ -1,4 +1,4 @@
-﻿import { readFile, writeFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import { appendFileSync } from "node:fs";
 import { join } from "node:path";
 import { execa } from "execa";
@@ -406,6 +406,26 @@ export async function runJsonCheck(arg: string | null = null): Promise<void> {
   const outcome = await engine.run(profile);
   const durationMs = Date.now() - startTime;
 
+  // GitHub Actions annotations (before JSON to keep stdout parseable)
+  if (process.env.GITHUB_ACTIONS === 'true') {
+    for (const result of outcome.results) {
+      if (!result.success) {
+        const msg = result.message || `${result.name} failed`;
+        console.error(`::warning title=${result.name}::${msg}`);
+      }
+    }
+    if (outcome.scoreSummary?.recommendations) {
+      for (const rec of outcome.scoreSummary.recommendations) {
+        console.error(`::notice title=Recommendation::${rec}`);
+      }
+    }
+    if (outcome.scoreSummary?.globalScore !== undefined) {
+      if (process.env.GITHUB_OUTPUT) {
+        appendFileSync(process.env.GITHUB_OUTPUT, `score=${outcome.scoreSummary.globalScore}\n`);
+      }
+    }
+  }
+
   console.log(JSON.stringify({
     profile,
     durationMs,
@@ -417,26 +437,6 @@ export async function runJsonCheck(arg: string | null = null): Promise<void> {
     suggestionSummary: outcome.suggestionSummary,
     reportPath: outcome.reportPath,
   }, null, 2));
-
-  // GitHub Actions annotations
-  if (process.env.GITHUB_ACTIONS === 'true') {
-    for (const result of outcome.results) {
-      if (!result.success) {
-        const msg = result.message || `${result.name} failed`;
-        console.log(`::warning title=${result.name}::${msg}`);
-      }
-    }
-    if (outcome.scoreSummary?.recommendations) {
-      for (const rec of outcome.scoreSummary.recommendations) {
-        console.log(`::notice title=Recommendation::${rec}`);
-      }
-    }
-    if (outcome.scoreSummary?.globalScore !== undefined) {
-      if (process.env.GITHUB_OUTPUT) {
-        appendFileSync(process.env.GITHUB_OUTPUT, `score=${outcome.scoreSummary.globalScore}\n`);
-      }
-    }
-  }
 
   if (!outcome.allSuccess) {
     process.exitCode = 1;
@@ -685,12 +685,12 @@ export async function runReport(options: ReportOptions = {}): Promise<void> {
     for (const result of checkerResults) {
       if (result.status === 'fail') {
         const msg = result.message || `${result.checker} failed`;
-        console.log(`::warning title=${result.checker}::${msg}`);
+        console.error(`::warning title=${result.checker}::${msg}`);
       }
     }
     if (scoreData?.recommendations) {
       for (const rec of scoreData.recommendations) {
-        console.log(`::notice title=Recommendation::${rec}`);
+        console.error(`::notice title=Recommendation::${rec}`);
       }
     }
     if (scoreData?.globalScore !== undefined) {
