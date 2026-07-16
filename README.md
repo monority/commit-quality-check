@@ -90,7 +90,7 @@ See [templates/azure-pipelines.yml](./templates/azure-pipelines.yml) for full te
 Create `commit-quality-check.yml` in your project root.
 See [CONFIGURATION.md](CONFIGURATION.md) for all options.
 
-## ðŸ¤– AI Integration (Optional)
+##  AI Integration (Optional)
 
 Enhance commit suggestions with AI-powered alternatives.
 
