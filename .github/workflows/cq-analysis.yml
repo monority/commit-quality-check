@@ -10,8 +10,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: monority/commit-quality-check@v3
+      - uses: actions/setup-node@v4
         with:
-          profile: full
-          reporters: cli,sarif
-          upload-sarif: true
+          node-version: 22
+      - name: Run commit quality check
+        run: npx -y commit-quality-check
+        env:
+          CQ_PROFILE: full
+          CQ_REPORTERS: cli,sarif
