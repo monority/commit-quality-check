@@ -1,6 +1,6 @@
 {
     "name":  "commit-quality-check",
-    "version":  "3.1.13",
+    "version":  "3.1.14",
     "description":  "Git commit quality CLI for pre-commit hooks, commit-msg validation, staged-file checks, and Husky git-hook workflows.",
     "type":  "module",
     "main":  "dist/scripts/cli.js",
@@ -21,7 +21,7 @@
                     "build":  "node build.mjs",
                     "typecheck":  "tsc --noEmit",
                     "test":  "node --import tsx --test ./test/*.test.ts",
-                    "prepare":  "husky"
+                    "prepare":  "node -e \"try{require(\u0027child_process\u0027).execSync(\u0027husky\u0027,{stdio:\u0027inherit\u0027})}catch(e){}\""
                 },
     "publishConfig":  {
                           "access":  "public"
