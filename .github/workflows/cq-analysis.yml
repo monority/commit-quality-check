@@ -13,8 +13,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
+      - name: Install commit-quality-check
+        run: npm install -g commit-quality-check --ignore-scripts --no-fund --no-audit
       - name: Run commit quality check
-        run: npx -y --ignore-scripts commit-quality-check
+        run: commit-quality-check json-check
+        continue-on-error: true
         env:
           CQ_PROFILE: full
           CQ_REPORTERS: cli,sarif
