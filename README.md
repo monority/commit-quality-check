@@ -7,6 +7,16 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/monority/commit-quality-check/actions/workflows/ci.yml">
+    <img src="https://github.com/monority/commit-quality-check/actions/workflows/ci.yml/badge.svg" alt="CI" />
+  </a>
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white" alt="TypeScript" />
+</p>
+
+<p align="center">
   <strong>Git commit quality CLI for pre-commit hooks, commit-msg validation, staged-file checks, and Husky workflows.</strong>
 </p>
 
@@ -14,7 +24,7 @@
 
 ##  Overview
 
-`commit-quality-check` (`cq`) is a diff-aware Git commit quality CLI for pre-commit hooks, commit-msg validation, staged-file checks, and Husky git-hook workflows. It automates linting, formatting, quality checks, commit suggestions, and CI-friendly analysis so each staged change lands cleaner.
+`commit-quality-check` (`cq`) is a diff-aware Git commit quality CLI for pre-commit hooks, commit-msg validation, staged-file checks, and Husky git-hook workflows. It automates linting, formatting, quality checks, commit suggestions, and CI-friendly analysis so each staged change lands cleaner. The project is fully written in **TypeScript** with strict type checking.
 
 ##  Features
 
@@ -40,12 +50,6 @@ Install the tool and enable the hook:
 npm install --save-dev commit-quality-check husky
 npx cq enable
 ```
- 
-Or with pnpm:
-```bash
-pnpm add -D commit-quality-check husky
-pnpm exec cq enable
-```
 
 Or with pnpm:
 ```bash
@@ -53,14 +57,89 @@ pnpm add -D commit-quality-check husky
 pnpm exec cq enable
 ```
 
-## ðY>  Usage & Commands
+## CI/CD
+```yaml
+- uses: monority/commit-quality-check@v3
+```
+See [GitHub Action](.github/actions/commit-quality-check/action.yml).
+
+### GitLab CI
+
+```yaml
+include:
+  - project: 'monority/commit-quality-check'
+    file: '/templates/gitlab-ci.yml'
+    ref: v3.2.0
+```
+
+See [templates/gitlab-ci.yml](./templates/gitlab-ci.yml) for full template.
+
+### Azure Pipelines
+
+```yaml
+steps:
+  - script: |
+      npm install --save-dev commit-quality-check
+      npx cq json-check --profile fast --reporters cli,sarif
+    displayName: 'Run Commit Quality Check'
+```
+
+See [templates/azure-pipelines.yml](./templates/azure-pipelines.yml) for full template.
+
+## Configuration
+Create `commit-quality-check.yml` in your project root.
+See [CONFIGURATION.md](CONFIGURATION.md) for all options.
+
+## Ã°Å¸Â¤â€“ AI Integration (Optional)
+
+Enhance commit suggestions with AI-powered alternatives.
+
+### Setup
+
+```bash
+# Choose your provider and set the API key
+export CQ_AI_PROVIDER=openai
+export CQ_AI_KEY=sk-...
+
+# Or for local AI with Ollama
+export CQ_AI_PROVIDER=ollama
+```
+
+### Supported Providers
+
+| Provider | Env Variable | Model Default |
+|----------|-------------|---------------|
+| OpenAI | `CQ_AI_KEY` or `OPENAI_API_KEY` | `gpt-4o-mini` |
+| Anthropic | `CQ_AI_KEY` or `ANTHROPIC_API_KEY` | `claude-sonnet-4-20250514` |
+| Ollama | (none, local) | `llama3` |
+
+### CLI Usage
+
+```bash
+cq --ai openai suggest
+cq --ai ollama staged
+```
+
+### YAML Configuration
+
+```yaml
+ai:
+  provider: openai
+  model: gpt-4o
+  temperature: 0.5
+  timeoutMs: 15000
+```
+
+> **Note**: AI is completely optional. Without configuration, the tool works exactly as before with zero overhead.
+
+## Usage & Commands
 
 Run `npx cq` to show interactive menu (arrow keys + enter):
 
 ```
-â"?â"?â"? COMMIT QUALITY CHECKER â"?â"?â"?
+ COMMIT QUALITY CHECKER 
 
-  â-¶ Toggle hook ON
+  - Toggle hook ON
     Toggle auto-push OFF
     Configure checks
     Run single check
@@ -71,7 +150,7 @@ Run `npx cq` to show interactive menu (arrow keys + enter):
     Full check
     Quit
 
-â+'â+" Select  ENTER Confirm  Q Quit
+Select  ENTER Confirm  Q Quit
 ```
 
 Or use direct commands:
@@ -218,11 +297,17 @@ When a check fails or a dependency is missing, a `quality-report.md` is generate
 
 ---
 
+## API Documentation
+
+Generated API documentation is available via TypeDoc:
+
+```bash
+npm run docs
+```
+
+Output: `docs/api/index.html`
+
 ## Repository
 
 [https://github.com/monority/commit-quality-check](https://github.com/monority/commit-quality-check)
-
-
-
-
 

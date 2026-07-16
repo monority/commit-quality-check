@@ -1,0 +1,17 @@
+# .github/workflows/cq-analysis.yml
+name: Commit Quality Analysis
+on:
+  pull_request:
+  push:
+    branches: [main, master]
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: monority/commit-quality-check@v3
+        with:
+          profile: full
+          reporters: cli,sarif
+          upload-sarif: true

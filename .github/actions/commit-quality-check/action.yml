@@ -1,0 +1,99 @@
+name: 'Commit Quality Check'
+description: 'Run commit quality checks and generate reports for your repository'
+author: 'monority'
+branding:
+  icon: 'check-circle'
+  color: 'green'
+
+inputs:
+  github-token:
+    description: 'GitHub token for PR annotations'
+    required: false
+    default: ${{ github.token }}
+  profile:
+    description: 'Check profile: fast (default) or full'
+    required: false
+    default: 'fast'
+  config:
+    description: 'Path to commit-quality-check.yml config file'
+    required: false
+  reporters:
+    description: 'Output reporters: cli, json, sarif, markdown (comma-separated)'
+    required: false
+    default: 'cli,sarif'
+  output-dir:
+    description: 'Directory for report files'
+    required: false
+    default: '.'
+  upload-sarif:
+    description: 'Upload SARIF report to GitHub CodeQL (true/false)'
+    required: false
+    default: 'false'
+
+outputs:
+  score:
+    description: 'Global quality score (0-100)'
+  report-path:
+    description: 'Path to the generated report file'
+  passed:
+    description: 'Whether all checks passed (true/false)'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Install commit-quality-check
+      run: npm install --save-dev commit-quality-check
+      shell: bash
+
+    - name: Run quality checks
+      id: quality
+      shell: bash
+      env:
+        CQ_CONFIG: ${{ inputs.config }}
+        CQ_PROFILE: ${{ inputs.profile }}
+        CQ_REPORTERS: ${{ inputs.reporters }}
+        CQ_OUTPUT_DIR: ${{ inputs.output-dir }}
+      run: |
+        EXIT_CODE=0
+        ARGS=""
+        if [ -n "$CQ_CONFIG" ]; then ARGS="$ARGS --config '$CQ_CONFIG'"; fi
+        if [ "$CQ_PROFILE" = "full" ]; then ARGS="$ARGS --full"; fi
+        if [ -n "$CQ_REPORTERS" ]; then ARGS="$ARGS --reporters '$CQ_REPORTERS'"; fi
+        if [ -n "$CQ_OUTPUT_DIR" ]; then ARGS="$ARGS --output '$CQ_OUTPUT_DIR'"; fi
+        npx cq json-check $ARGS > cq-output.json 2>&1 || EXIT_CODE=$?
+        SCORE=$(node -e "const d=require('./cq-output.json'); console.log(d.score?.global ?? d.scoreSummary?.globalScore ?? 'N/A')" 2>/dev/null || echo "N/A")
+        REPORT_PATH=$(node -e "const d=require('./cq-output.json'); console.log(d.reportPath || '')" 2>/dev/null || echo "")
+        echo "score=$SCORE" >> $GITHUB_OUTPUT
+        echo "report-path=$REPORT_PATH" >> $GITHUB_OUTPUT
+        echo "passed=$([ "$SCORE" != "N/A" ] && [ "$SCORE" -ge 50 ] && echo 'true' || echo 'false')" >> $GITHUB_OUTPUT
+        exit $EXIT_CODE
+
+    - name: Annotate PR
+      if: ${{ inputs.github-token != '' }}
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          if (!fs.existsSync('./cq-output.json')) return;
+          const d = JSON.parse(fs.readFileSync('./cq-output.json', 'utf8'));
+          if (d.checkers?.results) {
+            d.checkers.results.filter(r => r.status === 'fail').forEach(r => {
+              core.warning(r.message || `${r.checker} failed`, { title: r.checker });
+            });
+          }
+          if (d.score?.recommendations) {
+            d.score.recommendations.forEach(r => {
+              core.notice(r, { title: 'Recommendation' });
+            });
+          }
+          if (d.allSuccess === false) {
+            core.setFailed('Some quality checks failed');
+          }
+
+    - name: Upload SARIF
+      if: ${{ inputs.upload-sarif == 'true' }}
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: cq-output.sarif
+        category: commit-quality-check
+

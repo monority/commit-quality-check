@@ -1,0 +1,8 @@
+{
+  "entryPoints": ["src/index.ts"],
+  "out": "docs/api",
+  "tsconfig": "tsconfig.json",
+  "name": "commit-quality-check",
+  "excludePrivate": true,
+  "excludeProtected": true
+}

@@ -1,18 +1,49 @@
+## 3.1.0 - 2026-06-04
+
+### Added
+
+- Full TypeScript migration: 41 source files converted from JavaScript (JSDoc) to TypeScript with strict types.
+- TypeScript interfaces for all core contracts (13 interfaces + 5 type aliases in src/types.ts).
+- tsconfig.json with strict mode, NodeNext module resolution, ES2022 target.
+- tsx as dev dependency for running tests with TypeScript support.
+- Build pipeline updated: tsc --outDir dist replaces simple copy (build.mjs).
+- Type-safe APIs for all checkers, reporters, and CLI commands.
+- CheckResult.severity?: CheckerSeverity field added for SARIF reporter compatibility.
+- ProjectContext interface exported from BaseChecker for plugin authors.
+
+### Fixed
+
+- SecretChecker.exec() call had wrong signature (array was passed as command). Fixed to match BaseChecker.exec() signature: this.exec(context, "git", ["show", ...]).
+- cqc binary alias was missing from project root â€” added.
+
+### Changed
+
+- Package entry point: main â†’ dist/scripts/cli.js, bin â†’ dist/scripts/cli.js.
+- Published package now ships only dist/, cq, cqc, README.md, LICENSE.
+- All 42 .js shims removed after successful TypeScript compilation validation.
+- tsconfig.json: allowJs set to false after migration completion.
+
+### Validation
+
+- npx tsc --noEmit â€” 0 errors
+- npm test â€” 180/180 pass
+- npm run build â€” dist/ OK
+- npm pack --dry-run â€” 184 files, 82.2 kB
 # Changelog
 
 ## 3.0.5 - 2026-05-31
 
 ### Changed
 
-- npm package renamed from `commitiq-engine` back to `commit-quality-check` for better discoverability.
+- nnpm package renamed from `commitiq-engine` back to `commit-quality-check` for better discoverability.
 - CLI binary updated from `commitiq-engine` to `commit-quality-check`.
 - README updated to reflect new package name in installation commands, overview, and repository links.
 - Repository URLs updated to `monority/commit-quality-check`.
 
 ### Validation
 
-- `npm test`
-- `npm pack --dry-run`
+- `nnpm test`
+- `nnpm pack --dry-run`
 
 ### Changed
 
@@ -21,8 +52,8 @@
 ### Validation
 
 - `npm version patch`
-- `npm pack --dry-run`
-- `npm test`
+- `nnpm pack --dry-run`
+- `nnpm test`
 
 ## 3.0.3 - 2026-05-12
 
@@ -34,8 +65,8 @@
 ### Validation
 
 - `npm install --package-lock-only`
-- `npm pack --dry-run`
-- `npm test`
+- `nnpm pack --dry-run`
+- `nnpm test`
 
 ## 3.0.1 - 2026-05-12
 
@@ -49,14 +80,14 @@
 
 - `npm exec -- cq status`
 - `npm exec -- cqc status`
-- `npm pack --dry-run`
-- `npm test`
+- `nnpm pack --dry-run`
+- `nnpm test`
 
 ## 3.0.0 - 2026-05-11
 
 ### Breaking
 
-- npm package renamed from `commit-polish` to `commitiq-engine`.
+- nnpm package renamed from `commit-polish` to `commitiq-engine`.
 - Primary CLI command changed from `cqc` to `cq`.
 - GitHub repository target renamed from `monority/commit-polish` to `monority/commitiq-engine`.
 
@@ -70,13 +101,13 @@
 
 - `node --test ./test/BuildOutput.test.js ./test/CliHooks.test.js`
 - `npm install --package-lock-only`
-- `npm test`
+- `nnpm test`
 
 ## 2.0.0 - 2026-05-11
 
 ### Breaking
 
-- npm package renamed from `commit-quality-check` to `commit-polish`.
+- nnpm package renamed from `commit-quality-check` to `commit-polish`.
 - GitHub repository target renamed from `monority/tools-commit-quality-check` to `monority/commit-polish`.
 
 ### Added
@@ -96,4 +127,4 @@
 
 - `node --test ./test/CliHooks.test.js`
 - `node --test ./test/Reporter.test.js ./test/Engine.test.js`
-- `npm test`
+- `nnpm test`

@@ -1,0 +1,27 @@
+stages:
+  - quality
+
+cq:check:
+  stage: quality
+  image: node:20
+  variables:
+    CQ_PROFILE: "fast"
+    CQ_REPORTERS: "cli,sarif"
+  script:
+    - npm install --save-dev commit-quality-check
+    - npx cq json-check --profile $CQ_PROFILE --reporters $CQ_REPORTERS > cq-output.json
+    - |
+      if [ "$(node -e "const d=require('./cq-output.json'); console.log(d.allSuccess)")" = "false" ]; then
+        exit 1
+      fi
+  artifacts:
+    reports:
+      sarif: report.sarif
+    paths:
+      - cq-output.json
+      - report.sarif
+    expire_in: 30 days
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+

@@ -1,70 +1,68 @@
 {
-  "name": "commit-quality-check",
-  "version": "3.0.5",
-  "description": "Git commit quality CLI for pre-commit hooks, commit-msg validation, staged-file checks, and Husky git-hook workflows.",
-  "type": "module",
-  "main": "scripts/cli.js",
-  "bin": {
-    "commit-quality-check": "scripts/cli.js",
-    "cq": "scripts/cli.js",
-    "cqc": "scripts/cli.js"
-  },
-  "exports": {
-    ".": "./scripts/cli.js"
-  },
-  "files": [
-    "scripts",
-    "src",
-    "cq",
-    "cqc"
-  ],
-  "scripts": {
-    "build": "node build.mjs",
-    "test": "node --test ./test/*.test.js",
-    "prepare": "husky"
-  },
-  "publishConfig": {
-    "access": "public"
-  },
-  "keywords": [
-    "git",
-    "git-hooks",
-    "pre-commit",
-    "commit-msg",
-    "husky",
-    "conventional-commits",
-    "code-quality",
-    "staged-files",
-    "commit-lint",
-    "eslint",
-    "prettier",
-    "quality",
-    "commit",
-    "diff-aware",
-    "guard"
-  ],
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/monority/commit-quality-check.git"
-  },
-  "homepage": "https://github.com/monority/commit-quality-check#readme",
-  "bugs": {
-    "url": "https://github.com/monority/commit-quality-check/issues"
-  },
-  "author": "Ronan Chenu <ronan.chenu@example.com>",
-  "license": "MIT",
-  "dependencies": {
-    "execa": "^9.5.2",
-    "husky": "^9.1.6"
-  },
-  "engines": {
-    "node": ">=18"
-  },
-  "gitQuality": {
-    "skip": [
-      "Debug Artifacts",
-      "Playwright Tests"
-    ],
-    "autoPush": true
-  }
+    "name":  "commit-quality-check",
+    "version":  "3.0.5",
+    "description":  "Git commit quality CLI for pre-commit hooks, commit-msg validation, staged-file checks, and Husky git-hook workflows.",
+    "type":  "module",
+    "main":  "scripts/cli.js",
+    "bin":  {
+                "commit-quality-check":  "scripts/cli.js",
+                "cq":  "scripts/cli.js"
+            },
+    "exports":  {
+                    ".":  "./scripts/cli.js"
+                },
+    "files":  [
+                  "scripts",
+                  "src",
+                  "cq"
+              ],
+    "scripts":  {
+                    "build":  "node build.mjs",
+                    "test":  "node --import tsx --test ./test/*.test.ts",
+                    "prepare":  "husky"
+                },
+    "publishConfig":  {
+                          "access":  "public"
+                      },
+    "keywords":  [
+                     "git",
+                     "git-hooks",
+                     "pre-commit",
+                     "commit-msg",
+                     "husky",
+                     "conventional-commits",
+                     "code-quality",
+                     "staged-files",
+                     "commit-lint",
+                     "eslint",
+                     "prettier",
+                     "quality",
+                     "commit",
+                     "diff-aware",
+                     "guard"
+                 ],
+    "repository":  {
+                       "type":  "git",
+                       "url":  "git+https://github.com/monority/commit-quality-check.git"
+                   },
+    "homepage":  "https://github.com/monority/commit-quality-check#readme",
+    "bugs":  {
+                 "url":  "https://github.com/monority/commit-quality-check/issues"
+             },
+    "author":  "Ronan Chenu \u003cronan.chenu@example.com\u003e",
+    "license":  "MIT",
+    "dependencies":  {
+                         "execa":  "^9.5.2",
+                         "husky":  "^9.1.6"
+                     },
+    "engines":  {
+                    "node":  "\u003e=18"
+                },
+    "gitQuality":  {
+                       "skip":  [
+                                    "Debug Artifacts",
+                                    "Playwright Tests"
+                                ],
+                       "autoPush":  true
+                   }
 }

@@ -1,0 +1,27 @@
+trigger:
+  - main
+  - master
+
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+  - task: NodeTool@0
+    inputs:
+      versionSpec: '20'
+    displayName: 'Install Node.js'
+
+  - script: |
+      npm install --save-dev commit-quality-check
+    displayName: 'Install Commit Quality Check'
+
+  - script: |
+      npx cq json-check --profile fast --reporters cli,sarif
+    displayName: 'Run Commit Quality Check'
+
+  - script: |
+      node -e "
+        const d = require('./cq-output.json');
+        if (!d.allSuccess) process.exit(1);
+      "
+    displayName: 'Check Quality Gate'

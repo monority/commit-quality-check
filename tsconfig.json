@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "esModuleInterop": true,
+    "allowJs": false,
+    "checkJs": false,
+    "outDir": "dist",
+    "rootDir": "."
+  },
+  "include": ["src/**/*.ts", "scripts/**/*.ts"],
+  "exclude": ["node_modules", "dist", "test-project"]
+}
