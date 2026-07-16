@@ -13,9 +13,9 @@
                     "./src/*":  "./dist/src/*"
                 },
     "files":  [
-                  "scripts",
-                  "src",
-                  "cq"
+                  "dist",
+                  "README.md",
+                  "LICENSE"
               ],
     "scripts":  {
                     "build":  "node build.mjs",
@@ -54,19 +54,19 @@
     "author":  "Ronan Chenu \u003cronan.chenu@example.com\u003e",
     "license":  "MIT",
     "dependencies":  {
-                          "execa":  "^9.5.2",
-                          "husky":  "^9.1.6",
-                          "js-yaml":  "^4.1.0"
-                      },
+                         "execa":  "^9.5.2",
+                         "husky":  "^9.1.6",
+                         "js-yaml":  "^4.1.0"
+                     },
     "devDependencies":  {
-                           "@types/js-yaml":  "^4.0.9",
-                           "@types/node":  "^22.10.0",
-                           "@typescript-eslint/eslint-plugin":  "^8.6.0",
-                           "@typescript-eslint/parser":  "^8.6.0",
-                           "eslint":  "^9.20.0",
-                           "tsx":  "^4.19.0",
-                           "typescript":  "^5.9.0"
-                       },
+                            "@types/js-yaml":  "^4.0.9",
+                            "@types/node":  "^22.10.0",
+                            "@typescript-eslint/eslint-plugin":  "^8.6.0",
+                            "@typescript-eslint/parser":  "^8.6.0",
+                            "eslint":  "^9.20.0",
+                            "tsx":  "^4.19.0",
+                            "typescript":  "^5.9.0"
+                        },
     "engines":  {
                     "node":  "\u003e=18"
                 },
