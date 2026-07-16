@@ -83,8 +83,6 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Debug npmrc
-        run: cat .npmrc
 
       - name: Publish to npm
         run: npm publish --provenance --access public
