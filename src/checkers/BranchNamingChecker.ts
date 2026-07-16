@@ -72,7 +72,6 @@ export class BranchNamingChecker extends BaseChecker {
     }
 
     async _getCurrentBranch(context: ProjectContext): Promise<string | null> {
-        const { root } = context;
         try {
             const result = await this.exec(context, "git", ["branch", "--show-current"]);
             if (result.success && result.stdout.trim()) {

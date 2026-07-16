@@ -4,7 +4,6 @@ import { join } from "node:path";
 import { execa } from "execa";
 import { getProjectRoot } from "../../src/utils/ProjectUtils.js";
 import { C } from "./ui.js";
-import type { ColorCodes } from "./ui.js";
 import { isAutoPushConfigured, saveAutoPushConfig } from "./commands.js";
 
 const projRoot: string = await getProjectRoot();

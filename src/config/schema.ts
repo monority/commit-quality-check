@@ -1,5 +1,3 @@
-import type { CheckerCategory, CheckerSeverity } from '../types.js';
-
 export interface ConfigOptions {
   rules?: Record<string, boolean>;
   thresholds?: Record<string, number>;

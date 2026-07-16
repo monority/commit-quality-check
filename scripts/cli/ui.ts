@@ -1,6 +1,5 @@
 import readline from "node:readline";
-import { getProjectRoot } from "../../src/utils/ProjectUtils.js";
-import type { DiffAnalysis, ScoreSummary, TransparentScore, SuggestionSummary } from "../../src/types.js";
+import type { DiffAnalysis, ScoreSummary, SuggestionSummary } from "../../src/types.js";
 
 interface KeypressKey {
   name?: string;
@@ -8,8 +7,6 @@ interface KeypressKey {
   meta?: boolean;
   shift?: boolean;
 }
-
-const projRoot: string = await getProjectRoot();
 
 export interface ColorCodes {
   reset: string;

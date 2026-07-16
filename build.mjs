@@ -21,6 +21,14 @@ for (const entry of ['README.md', 'LICENSE', 'cq']) {
     }
 }
 
+// 3.5. Patch dist/cq — fix import path
+const cqDist = join(dist, 'cq');
+if (existsSync(cqDist)) {
+    let cqContent = readFileSync(cqDist, 'utf8');
+    cqContent = cqContent.replace('./dist/scripts/cli.js', './scripts/cli.js');
+    writeFileSync(cqDist, cqContent, 'utf8');
+}
+
 // 4. Generate dist/package.json
 const rootPackage = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'));
 const distPackage = {

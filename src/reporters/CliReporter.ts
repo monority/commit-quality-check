@@ -10,7 +10,7 @@ export interface CliReporterData {
  * CLI Reporter — Sortie console structurée et colorée.
  */
 export class CliReporter {
-  report(data: CliReporterData, options: Record<string, unknown> = {}): string {
+  report(data: CliReporterData, _options: Record<string, unknown> = {}): string {
     const lines: string[] = [];
     lines.push('');
     lines.push('  ╔══════════════════════════════════════╗');

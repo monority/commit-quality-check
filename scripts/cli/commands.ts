@@ -1,5 +1,4 @@
-﻿// @ts-nocheck
-import { readFile, writeFile } from "node:fs/promises";
+﻿import { readFile, writeFile } from "node:fs/promises";
 import { appendFileSync } from "node:fs";
 import { join } from "node:path";
 import { execa } from "execa";
@@ -10,7 +9,7 @@ import { ReportDispatcher } from "../../src/reporters/index.js";
 import { detectPackageManager, getProjectRoot } from "../../src/utils/ProjectUtils.js";
 import { formatSuggestionSummary, runCheck } from "../quality-staged.js";
 import type { ColorCodes } from "./ui.js";
-import type { CheckResult, CheckerSeverity, DiffAnalysis, TransparentScore } from "../../src/types.js";
+import type { CheckResult, CheckerSeverity, CheckStatus, DiffAnalysis, TransparentScore } from "../../src/types.js";
 
 const projRoot: string = await getProjectRoot();
 const packageJsonPath = join(projRoot, "package.json");
@@ -209,7 +208,7 @@ export async function configureChecks(): Promise<void> {
       }
 
       if (key?.name === "space") {
-        items[cursor].enabled = !items[cursor].enabled;
+        items[cursor]!.enabled = !items[cursor]!.enabled;
         drawChecklist("CONFIGURE CHECKS", items, cursor, "Arrows move  SPACE toggle  ENTER save  Q cancel");
         return;
       }
@@ -290,7 +289,7 @@ export async function runSingleCheckMenu(rootOverride: string | null = null): Pr
         process.stdin.removeListener("keypress", onKey);
         setRawMode(false);
         console.clear();
-        const selectedChecker = checkers[cursor];
+        const selectedChecker = checkers[cursor]!;
         await runCheck({
           fullProfile: selectedChecker.profile === "full",
           onlyCheckNames: [selectedChecker.name],
@@ -642,7 +641,7 @@ export async function runReport(options: ReportOptions = {}): Promise<void> {
     success: r.success,
     status: r.status || (r.success ? 'pass' : 'fail'),
     message: r.message,
-    severity: r.severity,
+    severity: (r.severity ?? "info") as CheckerSeverity,
   }));
 
   // Build score data from transparentScore
@@ -667,14 +666,13 @@ export async function runReport(options: ReportOptions = {}): Promise<void> {
   }
 
   const dispatcher = new ReportDispatcher();
-  const { outputs, files: writtenFiles } = dispatcher.dispatch(
-    {
-      score: scoreData,
-      checkerResults,
-      analysis: outcome.analysis ?? undefined,
-    },
-    { reporters, files },
-  );
+  const dispatchPayload: { score: TransparentScore; checkerResults: { name: string; checker: string; success: boolean; status: CheckStatus; message: string; severity: CheckerSeverity }[]; analysis?: DiffAnalysis } = {
+    score: scoreData,
+    checkerResults,
+    ...(outcome.analysis ? { analysis: outcome.analysis } : {}),
+  };
+  const result = dispatcher.dispatch(dispatchPayload, { reporters, files });
+  const writtenFiles = result.files;
 
   if (writtenFiles.length > 0) {
     for (const f of writtenFiles) {

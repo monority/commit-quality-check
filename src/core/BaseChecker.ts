@@ -21,7 +21,7 @@ export class BaseChecker {
     this.profile = profile;
   }
 
-  async run(context: ProjectContext): Promise<CheckResult> {
+  async run(_context: ProjectContext): Promise<CheckResult> {
     throw new Error(`Method 'run()' must be implemented by subclass ${this.constructor.name}`);
   }
 

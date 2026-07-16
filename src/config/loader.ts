@@ -1,5 +1,5 @@
 import { readFileSync, existsSync } from 'node:fs';
-import { join, dirname } from 'node:path';
+import { join } from 'node:path';
 import yaml from 'js-yaml';
 import type { ConfigOptions } from './schema.js';
 import { CONFIG_DEFAULTS, validateConfig } from './schema.js';

@@ -9,7 +9,7 @@ npm install
 
 ## Development
 - All code is ESM (`"type": "module"`)
-- Tests use Node native test runner with tsx for import resolution: `node --import tsx --test ./test/*.test.js`
+- Tests use Node native test runner with tsx for import resolution: `node --import tsx --test ./test/*.test.ts`
 - Run tests: `npm test`
 - Build dist: `npm run build` (runs `node build.mjs` under the hood)
 

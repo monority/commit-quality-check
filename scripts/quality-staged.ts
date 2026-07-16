@@ -7,7 +7,7 @@ import {
 } from "../src/utils/ProjectUtils.js";
 import { execa } from "execa";
 import { appendFileSync } from "node:fs";
-import type { ScoreSummary, SuggestionSummary, Penalty, CategoryScore } from "../src/types.js";
+import type { SuggestionSummary, Penalty, CategoryScore } from "../src/types.js";
 
 export interface FormattedScoreSummary {
   categories?: CategoryScore[];

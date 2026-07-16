@@ -1,15 +1,16 @@
 {
     "name":  "commit-quality-check",
-    "version":  "3.0.5",
+    "version":  "3.1.0",
     "description":  "Git commit quality CLI for pre-commit hooks, commit-msg validation, staged-file checks, and Husky git-hook workflows.",
     "type":  "module",
-    "main":  "scripts/cli.js",
+    "main":  "dist/scripts/cli.js",
     "bin":  {
-                "commit-quality-check":  "scripts/cli.js",
-                "cq":  "scripts/cli.js"
+                "commit-quality-check":  "dist/scripts/cli.js",
+                "cq":  "dist/scripts/cli.js"
             },
     "exports":  {
-                    ".":  "./scripts/cli.js"
+                    ".":  "./dist/scripts/cli.js",
+                    "./src/*":  "./dist/src/*"
                 },
     "files":  [
                   "scripts",
@@ -18,6 +19,7 @@
               ],
     "scripts":  {
                     "build":  "node build.mjs",
+                    "typecheck":  "tsc --noEmit",
                     "test":  "node --import tsx --test ./test/*.test.ts",
                     "prepare":  "husky"
                 },
@@ -52,9 +54,19 @@
     "author":  "Ronan Chenu \u003cronan.chenu@example.com\u003e",
     "license":  "MIT",
     "dependencies":  {
-                         "execa":  "^9.5.2",
-                         "husky":  "^9.1.6"
-                     },
+                          "execa":  "^9.5.2",
+                          "husky":  "^9.1.6",
+                          "js-yaml":  "^4.1.0"
+                      },
+    "devDependencies":  {
+                           "@types/js-yaml":  "^4.0.9",
+                           "@types/node":  "^22.10.0",
+                           "@typescript-eslint/eslint-plugin":  "^8.6.0",
+                           "@typescript-eslint/parser":  "^8.6.0",
+                           "eslint":  "^9.20.0",
+                           "tsx":  "^4.19.0",
+                           "typescript":  "^5.9.0"
+                       },
     "engines":  {
                     "node":  "\u003e=18"
                 },

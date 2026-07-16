@@ -10,7 +10,7 @@ export interface MarkdownReporterData {
  * Markdown Reporter — Génère quality-report.md
  */
 export class MarkdownReporter {
-  report(data: MarkdownReporterData, options: Record<string, unknown> = {}): string {
+  report(data: MarkdownReporterData, _options: Record<string, unknown> = {}): string {
     let md = `# Quality Check Report\n\n`;
     md += `Generated on: ${new Date().toLocaleString()}\n\n`;
 
