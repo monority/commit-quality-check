@@ -43,10 +43,7 @@
                      "diff-aware",
                      "guard"
                  ],
-    "repository":  {
-                       "type":  "git",
-                       "url":  "https://github.com/monority/commit-quality-check.git"
-                   },
+    "repository":  "monority/commit-quality-check",
     "homepage":  "https://github.com/monority/commit-quality-check#readme",
     "bugs":  {
                  "url":  "https://github.com/monority/commit-quality-check/issues"
