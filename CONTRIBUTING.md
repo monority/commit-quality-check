@@ -1,6 +1,7 @@
 # Contributing
 
 ## Setup
+
 ```bash
 git clone https://github.com/monority/commit-quality-check
 cd commit-quality-check
@@ -8,12 +9,15 @@ npm install
 ```
 
 ## Development
+
 - All code is ESM (`"type": "module"`)
 - Tests use Node native test runner with tsx for import resolution: `node --import tsx --test ./test/*.test.ts`
 - Run tests: `npm test`
 - Build dist: `npm run build` (runs `node build.mjs` under the hood)
+- End-to-end check: `npm run scenarios` packs the local package, builds a throwaway demo project, and plays 13 real scenarios (hooks, commits, secrets, debug artifacts, json-check, auto-push, uninstall); add `-- --keep` to keep the demo projects for inspection
 
 ## Code Conventions
+
 - TypeScript with strict mode (`tsconfig.json`: `strict: true`)
 - All public APIs are typed — prefer interfaces from `src/types.ts`
 - Use `import type { ... }` for type-only imports
@@ -23,12 +27,14 @@ npm install
 - All new features must include tests
 
 ## Pull Request Process
+
 1. Ensure tests pass
 2. Add tests for new functionality
 3. Update documentation if API changes
 4. Use Conventional Commits for PR titles
 
 ## Release Process
+
 1. Update version in package.json
 2. Run `npm run typecheck` to verify types
 3. Run `npm test` to verify all tests

@@ -25,7 +25,8 @@
     "format": "prettier --write \"src/**/*.ts\" \"scripts/**/*.ts\" \"test/**/*.ts\" \"build.mjs\"",
     "format:check": "prettier --check \"src/**/*.ts\" \"scripts/**/*.ts\" \"test/**/*.ts\" \"build.mjs\"",
     "lint": "eslint src scripts",
-    "test:coverage": "node --import tsx --test --experimental-test-coverage ./test/*.test.ts"
+    "test:coverage": "node --import tsx --test --experimental-test-coverage ./test/*.test.ts",
+    "scenarios": "node scripts/scenarios.mjs"
   },
   "publishConfig": {
     "access": "public"
