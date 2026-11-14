@@ -1,5 +1,18 @@
 # Changelog
 
+## 3.2.1 - 2026-11-14
+
+### Fixed
+
+- No longer crashes with `ENOENT` on repositories without a `package.json` (e.g. non-Node projects): `cq enable`, the pre-commit check, and status flows now degrade gracefully (package manager defaults to `npm`, checker skip lists and `gitQuality` config are simply empty). All package.json read sites tolerate a missing file.
+
+### Validation
+
+- `pnpm run typecheck` — 0 errors
+- `pnpm test` — 216/216 pass
+- `pnpm run build` — OK
+- Functional test: `cq enable` + hook-driven commit in a git repo without `package.json`
+
 ## 3.2.0 - 2026-11-14
 
 ### Added

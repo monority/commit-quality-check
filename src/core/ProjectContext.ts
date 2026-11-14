@@ -145,6 +145,8 @@ export class ProjectContext {
       if (error instanceof SyntaxError) {
         throw new Error(`Malformed package.json: ${(error as Error).message}`);
       }
+      const code = (error as NodeJS.ErrnoException).code;
+      if (code === "ENOENT" || code === "EISDIR") return {};
       throw new Error(`Could not read package.json: ${(error as Error).message}`);
     }
   }

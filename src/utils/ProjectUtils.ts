@@ -54,10 +54,17 @@ export async function detectPackageManager(root: string): Promise<string> {
   return "npm";
 }
 
+/** Read package.json, returning an empty object when the file does not exist. */
 export async function readProjectPackage(root: string): Promise<Record<string, unknown>> {
   const packageJsonPath = join(root, "package.json");
-  const raw = await readFile(packageJsonPath, "utf8");
-  return JSON.parse(raw) as Record<string, unknown>;
+  try {
+    const raw = await readFile(packageJsonPath, "utf8");
+    return JSON.parse(raw) as Record<string, unknown>;
+  } catch (error) {
+    const code = (error as NodeJS.ErrnoException).code;
+    if (code === "ENOENT" || code === "EISDIR") return {};
+    throw error;
+  }
 }
 
 /** List staged files (added/copied/modified/renamed) in the repo at `root`. */

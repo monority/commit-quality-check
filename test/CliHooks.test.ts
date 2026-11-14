@@ -666,3 +666,21 @@ test("cq without arguments prints a usage hint in non-TTY", async () => {
     await rm(root, { recursive: true, force: true });
   }
 });
+
+test("enable works in a repo without package.json", async () => {
+  const root = await mkdtemp(join(tmpdir(), "cq-cli-hooks-no-pkg-"));
+
+  try {
+    await execa("git", ["init"], { cwd: root });
+
+    await runCli(["enable"], { cwd: root });
+
+    const preCommit = await readFile(join(root, ".husky", "pre-commit"), "utf8");
+    const commitMsg = await readFile(join(root, ".husky", "commit-msg"), "utf8");
+
+    assert.match(preCommit, /exec -- cq staged/);
+    assert.match(commitMsg, /exec -- cq commit-msg "\$1"/);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});

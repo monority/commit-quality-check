@@ -14,7 +14,14 @@ export const projRoot: string = await getProjectRoot();
 const packageJsonPath = join(projRoot, "package.json");
 
 export async function readProjectPackageFile(): Promise<Record<string, unknown>> {
-  const raw = await readFile(packageJsonPath, "utf8");
+  let raw: string;
+  try {
+    raw = await readFile(packageJsonPath, "utf8");
+  } catch (error) {
+    const code = (error as NodeJS.ErrnoException).code;
+    if (code === "ENOENT" || code === "EISDIR") return {};
+    throw error;
+  }
   const clean = raw.charCodeAt(0) === 0xfeff ? raw.slice(1) : raw;
   return JSON.parse(clean) as Record<string, unknown>;
 }
