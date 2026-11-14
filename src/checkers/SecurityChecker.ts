@@ -1,47 +1,58 @@
 import { BaseChecker, ProjectContext } from "../core/BaseChecker.js";
 import type { CheckResult } from "../types.js";
 
+/**
+ * Count vulnerabilities from `audit --json` output (npm/pnpm/yarn/bun),
+ * falling back to the plain-text summary line. Unknown output counts as 0:
+ * a failing or unreadable audit must not fail the check by itself.
+ */
+export function parseAuditVulnerabilityCount(output: string): number {
+  try {
+    const parsed = JSON.parse(output) as {
+      metadata?: { vulnerabilities?: { total?: number } };
+    };
+    if (parsed?.metadata?.vulnerabilities) {
+      return parsed.metadata.vulnerabilities.total ?? 0;
+    }
+    if (Array.isArray(parsed)) {
+      return parsed.length;
+    }
+    return 0;
+  } catch {
+    const match = output.match(/(\d+)\s+vulnerabilities?/);
+    return match ? Number(match[1]) : 0;
+  }
+}
+
 export class SecurityChecker extends BaseChecker {
-    declare profile: string;
+  declare profile: string;
 
-    constructor() {
-        super("Dependencies Vulnerabilities");
-        this.profile = "fast";
+  constructor() {
+    super("Dependencies Vulnerabilities");
+    this.profile = "fast";
+  }
+
+  async run(context: ProjectContext): Promise<CheckResult> {
+    const { packageManager } = context;
+    const pm = packageManager || "npm";
+
+    try {
+      const result = await this.exec(context, pm, ["audit", "--json"]);
+      const total = parseAuditVulnerabilityCount(result.stdout || result.stderr);
+
+      if (total > 0) {
+        return {
+          success: false,
+          message: `Vulnerabilities found: ${total}`,
+          suggestedFix: `${pm} audit fix`,
+          details: `Run \`${pm} audit fix\` to fix ${total} vulnerabilit${total === 1 ? "y" : "ies"}.`,
+        };
+      }
+
+      return { success: true, message: "No vulnerabilities found" };
+    } catch {
+      // Audit could not run (no lockfile, offline...): not a quality failure.
+      return { success: true, message: "Audit unavailable: skipped" };
     }
-
-    async run(context: ProjectContext): Promise<CheckResult> {
-        const { packageManager } = context;
-        const pm = packageManager || "npm";
-
-        try {
-            const result = await this.exec(context, pm, ["audit"]);
-            const output = result.stdout || result.stderr || "";
-            const hasVulns = output.includes("vulnerabilities") && !output.includes("0 vulnerabilities");
-
-            if (hasVulns) {
-                const lines = output.split("\n").slice(0, 15).join("\n");
-                return {
-                    success: false,
-                    message: "Vulnerabilities found",
-                    suggestedFix: `${pm} audit fix`,
-                    details: `Run \`${pm} audit fix\` to fix.\n\n${lines}`,
-                };
-            }
-
-            return { success: true, message: "No vulnerabilities found" };
-        } catch (error) {
-            const err = error as { stderr?: string; message?: string };
-            const errMsg = err.stderr || err.message || "";
-            const lines = errMsg.split("\n").slice(0, 15).join("\n");
-            if (lines.includes("vulnerabilities")) {
-                return {
-                    success: false,
-                    message: "Vulnerabilities found",
-                    suggestedFix: `${pm} audit fix`,
-                    details: `Run \`${pm} audit fix\` to fix.\n\n${lines}`,
-                };
-            }
-            return { success: true, message: "No vulnerabilities found" };
-        }
-    }
+  }
 }

@@ -22,9 +22,16 @@ const mockScore: TransparentScore = {
       weight: 40,
       weightedScore: 32,
       penalties: [
-        { reason: "WIP commit detected", impact: -10, recommendation: "Use descriptive commit messages" },
+        {
+          reason: "WIP commit detected",
+          impact: -10,
+          recommendation: "Use descriptive commit messages",
+        },
       ],
-      breakdown: [{ label: "conventional", value: 90 }, { label: "scope", value: 70 }],
+      breakdown: [
+        { label: "conventional", value: 90 },
+        { label: "scope", value: 70 },
+      ],
     },
     {
       category: "history_quality",
@@ -33,7 +40,10 @@ const mockScore: TransparentScore = {
       weight: 40,
       weightedScore: 26,
       penalties: [],
-      breakdown: [{ label: "atomicity", value: 60 }, { label: "size", value: 70 }],
+      breakdown: [
+        { label: "atomicity", value: 60 },
+        { label: "size", value: 70 },
+      ],
     },
     {
       category: "workflow_quality",
@@ -45,17 +55,33 @@ const mockScore: TransparentScore = {
       breakdown: [{ label: "tests", value: 70 }],
     },
   ],
-  recommendations: [
-    "Add tests for changed source files",
-    "Use conventional commit format",
-  ],
+  recommendations: ["Add tests for changed source files", "Use conventional commit format"],
 };
 
 const mockCheckerResults: CheckResult[] = [
-  { name: "Commit Message", checker: "commit-msg", success: true, status: "pass", message: "Valid conventional commit" },
-  { name: "Linting", checker: "lint", success: false, status: "fail", message: "ESLint found 3 errors", severity: "error" },
+  {
+    name: "Commit Message",
+    checker: "commit-msg",
+    success: true,
+    status: "pass",
+    message: "Valid conventional commit",
+  },
+  {
+    name: "Linting",
+    checker: "lint",
+    success: false,
+    status: "fail",
+    message: "ESLint found 3 errors",
+    severity: "error",
+  },
   { name: "Tests", checker: "test", success: true, status: "pass", message: "All tests passed" },
-  { name: "Type Check", checker: "typecheck", success: false, status: "skip", message: "No typecheck script found" },
+  {
+    name: "Type Check",
+    checker: "typecheck",
+    success: false,
+    status: "skip",
+    message: "No typecheck script found",
+  },
 ];
 
 const mockAnalysis: DiffAnalysis = {
@@ -127,13 +153,13 @@ test("CliReporter shows penalties", () => {
   assert.match(output, /\(-10\)/);
 });
 
-test("CliReporter shows checker results with icons", () => {
+test("CliReporter shows checker results with status labels", () => {
   const reporter = new CliReporter();
   const output = reporter.report(mockData);
 
-  assert.match(output, /✓/); // pass
-  assert.match(output, /✗/); // fail
-  assert.match(output, /○/); // skip
+  assert.match(output, /\[PASS\]/); // pass
+  assert.match(output, /\[FAIL\]/); // fail
+  assert.match(output, /\[SKIP\]/); // skip
   assert.match(output, /commit-msg:/);
   assert.match(output, /lint:/);
 });
@@ -267,8 +293,10 @@ test("SarifReporter converts checker failures to results", () => {
   const output = reporter.report(mockData);
   const parsed = JSON.parse(output);
 
-  const failResults = parsed.runs[0].results.filter(r => r.level === "error" || r.level === "warning" || r.level === "note");
-  const checkerFailures = failResults.filter(r => r.ruleId === "lint");
+  const failResults = parsed.runs[0].results.filter(
+    (r) => r.level === "error" || r.level === "warning" || r.level === "note",
+  );
+  const checkerFailures = failResults.filter((r) => r.ruleId === "lint");
 
   assert.ok(checkerFailures.length > 0);
   assert.equal(checkerFailures[0].level, "error");
@@ -280,7 +308,7 @@ test("SarifReporter converts penalties to results", () => {
   const output = reporter.report(mockData);
   const parsed = JSON.parse(output);
 
-  const penaltyResults = parsed.runs[0].results.filter(r => r.ruleId.startsWith("penalty/"));
+  const penaltyResults = parsed.runs[0].results.filter((r) => r.ruleId.startsWith("penalty/"));
 
   assert.ok(penaltyResults.length > 0);
   assert.match(penaltyResults[0].message.text, /WIP commit detected/);

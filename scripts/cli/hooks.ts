@@ -1,28 +1,48 @@
-import { existsSync } from "node:fs";
 import { chmod, mkdir, readFile, unlink, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { execa } from "execa";
-import { getProjectRoot } from "../../src/utils/ProjectUtils.js";
+import { detectPackageManager, getProjectRoot } from "../../src/utils/ProjectUtils.js";
 import { C } from "./ui.js";
 import { isAutoPushConfigured, saveAutoPushConfig } from "./commands.js";
 
 const projRoot: string = await getProjectRoot();
 
-export const PRE_COMMIT_HOOK = "#!/usr/bin/env sh\nnpm exec -- cq staged\n";
-export const COMMIT_MSG_HOOK = "#!/usr/bin/env sh\nnpm exec -- cq commit-msg \"$1\"\n";
-export const AUTO_PUSH_HOOK = "#!/usr/bin/env sh\nnpm exec -- cq check && git push\n";
-export const PRE_COMMIT_COMMAND = "npm exec -- cq staged";
-export const COMMIT_MSG_COMMAND = "npm exec -- cq commit-msg \"$1\"";
-export const AUTO_PUSH_COMMAND = "git push";
 export const AUTO_PUSH_HOOKS = ["post-commit", "pre-push"];
 
-export async function hasHookCommand(filePath: string, expectedCommand: string): Promise<boolean> {
-  try {
-    const content = await readFile(filePath, "utf8");
-    return content.replace(/\r\n/g, "\n").includes(expectedCommand);
-  } catch {
-    return false;
-  }
+function execPrefix(packageManager: string): string {
+  return `${packageManager} exec --`;
+}
+
+/** Hook file contents, generated for the project's package manager. */
+export function buildPreCommitHook(packageManager: string): string {
+  return `#!/usr/bin/env sh\n${execPrefix(packageManager)} cq staged\n`;
+}
+
+export function buildCommitMsgHook(packageManager: string): string {
+  return `#!/usr/bin/env sh\n${execPrefix(packageManager)} cq commit-msg "$1"\n`;
+}
+
+export function buildAutoPushHook(packageManager: string): string {
+  return `#!/usr/bin/env sh\n${execPrefix(packageManager)} cq check && git push\n`;
+}
+
+/** Match a cq hook line generated for any supported package manager. */
+function matchesCqHookLine(content: string, command: string): boolean {
+  const normalized = content.replace(/\r\n/g, "\n");
+  const escaped = command.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(`^(?:npm|pnpm|yarn|bun) exec -- ${escaped}$`, "m").test(normalized);
+}
+
+export function isPreCommitHook(content: string): boolean {
+  return matchesCqHookLine(content, "cq staged");
+}
+
+export function isCommitMsgHook(content: string): boolean {
+  return matchesCqHookLine(content, 'cq commit-msg "$1"');
+}
+
+export function hasGitPush(content: string): boolean {
+  return /\bgit\s+push\b/.test(content.replace(/\r\n/g, "\n"));
 }
 
 export function isManagedHooksPath(hooksPath: string): boolean {
@@ -60,8 +80,8 @@ export async function removeAutoPushHookIfSafe(filePath: string): Promise<boolea
       .filter((line) => line && !line.startsWith("#"));
 
     const hasPush = commandLines.some((line) => /\bgit\s+push\b/.test(line));
-    const cqRelated = commandLines.some((line) =>
-      /\bcq\b/.test(line) || /\bhusky\b/.test(line) || /\bgit\s+push\b/.test(line),
+    const cqRelated = commandLines.some(
+      (line) => /\bcq\b/.test(line) || /\bhusky\b/.test(line) || /\bgit\s+push\b/.test(line),
     );
 
     if (hasPush && cqRelated) {
@@ -81,7 +101,7 @@ export async function removeAutoPushHooks(): Promise<boolean> {
 
   for (const hookName of AUTO_PUSH_HOOKS) {
     const hookPath = join(huskyDir, hookName);
-    removed = await removeAutoPushHookIfSafe(hookPath) || removed;
+    removed = (await removeAutoPushHookIfSafe(hookPath)) || removed;
   }
 
   return removed;
@@ -97,19 +117,27 @@ export interface HookState {
   broken: boolean;
 }
 
+async function readHookContent(filePath: string): Promise<string> {
+  try {
+    return await readFile(filePath, "utf8");
+  } catch {
+    return "";
+  }
+}
+
 export async function getHookState(): Promise<HookState> {
   const preCommitPath = join(projRoot, ".husky", "pre-commit");
   const commitMsgPath = join(projRoot, ".husky", "commit-msg");
   const autoPushPath = join(projRoot, ".husky", "post-commit");
-  const preCommitExists = existsSync(preCommitPath);
-  const commitMsgExists = existsSync(commitMsgPath);
-  const preCommitValid = await hasHookCommand(preCommitPath, PRE_COMMIT_COMMAND);
-  const commitMsgValid = await hasHookCommand(commitMsgPath, COMMIT_MSG_COMMAND);
-  const autoPushValid = await hasHookCommand(autoPushPath, AUTO_PUSH_COMMAND);
+  const preCommitContent = await readHookContent(preCommitPath);
+  const commitMsgContent = await readHookContent(commitMsgPath);
+  const preCommitValid = isPreCommitHook(preCommitContent);
+  const commitMsgValid = isCommitMsgHook(commitMsgContent);
+  const autoPushValid = hasGitPush(await readHookContent(autoPushPath));
   const hooksPath = await getGitHooksPath();
   const hooksPathValid = isManagedHooksPath(hooksPath);
   const enabled = preCommitValid && commitMsgValid && hooksPathValid;
-  const broken = (preCommitExists || commitMsgExists) && !enabled;
+  const broken = Boolean((preCommitContent || commitMsgContent) && !enabled);
 
   return {
     preCommit: preCommitValid,
@@ -126,17 +154,16 @@ export async function enableHook(): Promise<void> {
   const huskyDir = join(projRoot, ".husky");
   const preCommitPath = join(huskyDir, "pre-commit");
   const commitMsgPath = join(huskyDir, "commit-msg");
+  const packageManager = await detectPackageManager(projRoot);
 
   await mkdir(huskyDir, { recursive: true });
-  await writeFile(preCommitPath, PRE_COMMIT_HOOK, "utf8");
-  await writeFile(commitMsgPath, COMMIT_MSG_HOOK, "utf8");
+  await writeFile(preCommitPath, buildPreCommitHook(packageManager), "utf8");
+  await writeFile(commitMsgPath, buildCommitMsgHook(packageManager), "utf8");
   await chmod(preCommitPath, 0o755);
   await chmod(commitMsgPath, 0o755);
   await setGitHooksPath();
   const autoPushEnabled = await isAutoPushConfigured();
-  const removedAutoPush = autoPushEnabled
-    ? false
-    : await removeAutoPushHooks();
+  const removedAutoPush = autoPushEnabled ? false : await removeAutoPushHooks();
   if (autoPushEnabled) {
     await enableAutoPushHook();
   }
@@ -149,9 +176,10 @@ export async function enableHook(): Promise<void> {
 export async function enableAutoPushHook(): Promise<void> {
   const huskyDir = join(projRoot, ".husky");
   const autoPushPath = join(huskyDir, "post-commit");
+  const packageManager = await detectPackageManager(projRoot);
 
   await mkdir(huskyDir, { recursive: true });
-  await writeFile(autoPushPath, AUTO_PUSH_HOOK, "utf8");
+  await writeFile(autoPushPath, buildAutoPushHook(packageManager), "utf8");
   await chmod(autoPushPath, 0o755);
 }
 
@@ -209,8 +237,5 @@ export async function disableHook(): Promise<void> {
 
   await unsetGitHooksPathIfManaged();
 
-  console.log(
-    removed ? `${C.green}Hooks disabled${C.reset}` : `${C.yellow}Already off${C.reset}`,
-  );
+  console.log(removed ? `${C.green}Hooks disabled${C.reset}` : `${C.yellow}Already off${C.reset}`);
 }
-

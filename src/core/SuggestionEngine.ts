@@ -1,7 +1,11 @@
-import type { DiffAnalysis, ScoreSummary, SuggestionSummary } from '../types.js';
-import type { AiModule, AiSuggestion } from '../ai/types.js';
+import type { DiffAnalysis, ScoreSummary, SuggestionSummary } from "../types.js";
+import type { AiModule, AiSuggestion } from "../ai/types.js";
 
-function buildDescription(analysis: DiffAnalysis, scoreSummary: ScoreSummary, scope: string): string {
+function buildDescription(
+  analysis: DiffAnalysis,
+  scoreSummary: ScoreSummary,
+  scope: string,
+): string {
   if (analysis.signals.hasDocumentation && !analysis.signals.hasSourceChanges) {
     return "update documentation";
   }
@@ -73,9 +77,8 @@ export class SuggestionEngine {
     const type = scoreSummary?.probableType || "chore";
     const scope = scoreSummary?.probableScope || "repo";
     const description = buildDescription(analysis, scoreSummary, scope);
-    const suggestedHeader = scope && scope !== "repo"
-      ? `${type}(${scope}): ${description}`
-      : `${type}: ${description}`;
+    const suggestedHeader =
+      scope && scope !== "repo" ? `${type}(${scope}): ${description}` : `${type}: ${description}`;
 
     const rationale = buildRationale(analysis, scoreSummary);
 
@@ -97,7 +100,7 @@ export class SuggestionEngine {
 
     // Enrich rationale with AI alternatives
     const enrichedRationale = aiSuggestion?.alternatives?.length
-      ? [...rationale, ...aiSuggestion.alternatives.map(a => `✨ AI: ${a}`)]
+      ? [...rationale, ...aiSuggestion.alternatives.map((a) => `AI: ${a}`)]
       : rationale;
 
     return {

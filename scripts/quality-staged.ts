@@ -85,11 +85,7 @@ export function formatSuggestionSummary(suggestionSummary: SuggestionSummary | n
     return "";
   }
 
-  const lines: string[] = [
-    "",
-    "Suggested Commit",
-    suggestionSummary.suggestedHeader,
-  ];
+  const lines: string[] = ["", "Suggested Commit", suggestionSummary.suggestedHeader];
 
   if (suggestionSummary.rationale.length > 0) {
     lines.push("Why:");
@@ -109,7 +105,7 @@ export interface RunCheckOptions {
 
 export async function runCheck(options: RunCheckOptions = {}): Promise<void> {
   try {
-    const root = options.root || await getProjectRoot();
+    const root = options.root || (await getProjectRoot());
     const packageManager = await detectPackageManager(root);
     const projectPackage = await readProjectPackage(root);
 
@@ -134,7 +130,9 @@ export async function runCheck(options: RunCheckOptions = {}): Promise<void> {
     });
 
     console.log("Running commit quality checks...");
-    const { allSuccess, results, scoreSummary, suggestionSummary } = await engine.run(options.fullProfile ? "full" : "fast");
+    const { allSuccess, results, scoreSummary, suggestionSummary } = await engine.run(
+      options.fullProfile ? "full" : "fast",
+    );
 
     const suggestionBlock = formatSuggestionSummary(suggestionSummary);
     if (suggestionBlock) {
@@ -159,7 +157,7 @@ export async function runCheck(options: RunCheckOptions = {}): Promise<void> {
     const failed = !allSuccess;
 
     // GitHub Actions annotations
-    if (process.env.GITHUB_ACTIONS === 'true') {
+    if (process.env.GITHUB_ACTIONS === "true") {
       for (const result of results) {
         if (!result.success) {
           const msg = result.message || `${result.name} failed`;

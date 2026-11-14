@@ -1,5 +1,6 @@
-import type { CheckResult, CheckerCategory, CheckerSeverity, ProjectConfig } from '../types.js';
+import type { CheckResult, CheckerCategory, CheckerSeverity, ProjectConfig } from "../types.js";
 import { execa } from "execa";
+import { listStagedFiles } from "../utils/ProjectUtils.js";
 
 export interface ProjectContext extends ProjectConfig {
   config?: Record<string, unknown>;
@@ -25,7 +26,12 @@ export class BaseChecker {
     throw new Error(`Method 'run()' must be implemented by subclass ${this.constructor.name}`);
   }
 
-  async exec(context: ProjectContext, command: string, args: string[] = [], options: Record<string, unknown> = {}): Promise<{ success: boolean; stdout: string; stderr: string }> {
+  async exec(
+    context: ProjectContext,
+    command: string,
+    args: string[] = [],
+    options: Record<string, unknown> = {},
+  ): Promise<{ success: boolean; stdout: string; stderr: string }> {
     const { root } = context;
 
     try {
@@ -50,27 +56,9 @@ export class BaseChecker {
   }
 
   async getStagedFiles(context: ProjectContext): Promise<string[]> {
-    if (Array.isArray(context?.stagedFiles)) {
-      return context.stagedFiles.filter((file) => !this.isIgnoredFile(file, context));
-    }
-
-    const { root } = context;
-    try {
-      const { stdout } = await execa(
-        "git",
-        ["diff", "--cached", "--name-only", "--diff-filter=ACMR"],
-        { cwd: root },
-      );
-      return stdout
-        .split("\n")
-        .map((f) => f.trim())
-        .filter(Boolean)
-        .filter((file) => !this.isIgnoredFile(file, context));
-    } catch (error) {
-      const err = error as { message: string };
-      console.error(`❌ Failed to get staged files: ${err.message}`);
-      return [];
-    }
+    const provided = context?.stagedFiles;
+    const files = Array.isArray(provided) ? [...provided] : await listStagedFiles(context.root);
+    return files.filter((file) => !this.isIgnoredFile(file, context));
   }
 
   isIgnoredFile(file: string, context: ProjectContext): boolean {
@@ -78,25 +66,39 @@ export class BaseChecker {
     if (ignorePatterns.length === 0) return false;
 
     const normalizedFile = normalizePath(file);
-    return ignorePatterns.some((pattern) =>
-      matchesIgnorePattern(normalizedFile, pattern),
-    );
+    return ignorePatterns.some((pattern) => matchesIgnorePattern(normalizedFile, pattern));
   }
 
-  getPackageManagerScriptCommand(packageManager: string, script: string, extraArgs: string[] = []): { command: string; args: string[] } {
+  getPackageManagerScriptCommand(
+    packageManager: string,
+    script: string,
+    extraArgs: string[] = [],
+  ): { command: string; args: string[] } {
+    // npm/pnpm need `--` to forward args, but only when there are any:
+    // a bare `npm run x --` forwards a literal `--` to the script.
     switch (packageManager) {
       case "pnpm":
-        return { command: "pnpm", args: ["run", script, "--", ...extraArgs] };
+        return {
+          command: "pnpm",
+          args: extraArgs.length > 0 ? ["run", script, "--", ...extraArgs] : ["run", script],
+        };
       case "yarn":
         return { command: "yarn", args: ["run", script, ...extraArgs] };
       case "bun":
         return { command: "bun", args: ["run", script, ...extraArgs] };
       default:
-        return { command: "npm", args: ["run", script, "--", ...extraArgs] };
+        return {
+          command: "npm",
+          args: extraArgs.length > 0 ? ["run", script, "--", ...extraArgs] : ["run", script],
+        };
     }
   }
 
-  async runScript(context: ProjectContext, script: string, extraArgs: string[] = []): Promise<{ success: boolean; stdout: string; stderr: string }> {
+  async runScript(
+    context: ProjectContext,
+    script: string,
+    extraArgs: string[] = [],
+  ): Promise<{ success: boolean; stdout: string; stderr: string }> {
     const { packageManager } = context;
     const { command, args } = this.getPackageManagerScriptCommand(
       packageManager,
@@ -106,7 +108,10 @@ export class BaseChecker {
     return this.exec(context, command, args);
   }
 
-  async checkDependencies(context: ProjectContext, dependencies: string[]): Promise<{ installed: boolean; command: string }> {
+  async checkDependencies(
+    context: ProjectContext,
+    dependencies: string[],
+  ): Promise<{ installed: boolean; command: string }> {
     const { packageManager, projectPackage } = context;
     const pkg = projectPackage as Record<string, unknown> | undefined;
     const hasDependency = (dep: string): boolean =>
@@ -129,10 +134,14 @@ export class BaseChecker {
   getInstallCommand(packageManager: string, dependencies: string[]): string {
     const deps = dependencies.join(" ");
     switch (packageManager) {
-      case "pnpm": return `pnpm add -D ${deps}`;
-      case "yarn": return `yarn add -D ${deps}`;
-      case "bun": return `bun add -d ${deps}`;
-      default: return `npm install --save-dev ${deps}`;
+      case "pnpm":
+        return `pnpm add -D ${deps}`;
+      case "yarn":
+        return `yarn add -D ${deps}`;
+      case "bun":
+        return `bun add -d ${deps}`;
+      default:
+        return `npm install --save-dev ${deps}`;
     }
   }
 }
@@ -150,9 +159,7 @@ function matchesIgnorePattern(file: string, pattern: string): boolean {
   if (!normalizedPattern) return false;
 
   if (hasGlob(normalizedPattern)) {
-    const target = normalizedPattern.includes("/")
-      ? file
-      : (file.split("/").pop() ?? "");
+    const target = normalizedPattern.includes("/") ? file : (file.split("/").pop() ?? "");
     return globToRegExp(normalizedPattern).test(target);
   }
 

@@ -19,35 +19,37 @@ import { MergeCommitChecker } from "./MergeCommitChecker.js";
 import type { CheckerPlugin } from "../types.js";
 
 export function createBuiltinCheckers() {
-    return [
-        new LintChecker(),
-        new FormatChecker(),
-        new CommitMsgChecker(),
-        new SecretChecker(),
-        new DebugArtifactsChecker(),
-        new SecurityChecker(),
-        new RiskChecker(),
-        new TypecheckChecker(),
-        new TestChecker(),
-        new BuildChecker(),
-        new NpmPackChecker(),
-        new PlaywrightChecker(),
-        new ConventionalCommitChecker(),
-        new CommitSizeChecker(),
-        new WipCommitChecker(),
-        new BranchNamingChecker(),
-        new SignedCommitChecker(),
-        new MergeCommitChecker(),
-    ];
+  return [
+    new LintChecker(),
+    new FormatChecker(),
+    new CommitMsgChecker(),
+    new SecretChecker(),
+    new DebugArtifactsChecker(),
+    new SecurityChecker(),
+    new RiskChecker(),
+    new TypecheckChecker(),
+    new TestChecker(),
+    new BuildChecker(),
+    new NpmPackChecker(),
+    new PlaywrightChecker(),
+    new ConventionalCommitChecker(),
+    new CommitSizeChecker(),
+    new WipCommitChecker(),
+    new BranchNamingChecker(),
+    new SignedCommitChecker(),
+    new MergeCommitChecker(),
+  ];
 }
 
 export function createBuiltinPlugin(): CheckerPlugin {
-    return {
-        name: "builtin-checkers",
-        checkers: createBuiltinCheckers,
-    };
+  return {
+    name: "builtin-checkers",
+    checkers: createBuiltinCheckers,
+  };
 }
 
-export function registerBuiltinCheckers<T extends { use: (plugin: CheckerPlugin) => T }>(engine: T): T {
-    return engine.use(createBuiltinPlugin());
+export function registerBuiltinCheckers<T extends { use: (plugin: CheckerPlugin) => T }>(
+  engine: T,
+): T {
+  return engine.use(createBuiltinPlugin());
 }

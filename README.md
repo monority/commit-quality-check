@@ -1,313 +1,90 @@
-<h1 align="center">
-  Commit Quality Checker
-</h1>
+# commit-quality-check
 
-<p align="center">
-   <img src="./logo-commit.svg" alt="Commit Quality Checker Logo" width="120"/>
-</p>
+[![CI](https://github.com/monority/commit-quality-check/actions/workflows/ci.yml/badge.svg)](https://github.com/monority/commit-quality-check/actions/workflows/ci.yml)
+[![npm](https://img.shields.io/npm/v/commit-quality-check.svg)](https://www.npmjs.com/package/commit-quality-check)
+[![license](https://img.shields.io/npm/l/commit-quality-check.svg)](./LICENSE)
 
-<p align="center">
-  <a href="https://github.com/monority/commit-quality-check/actions/workflows/ci.yml">
-    <img src="https://github.com/monority/commit-quality-check/actions/workflows/ci.yml/badge.svg" alt="CI" />
-  </a>
-</p>
+Pre-commit and commit-msg quality checks for Git repositories. `cq` runs lint, formatting, secret scans, tests, and commit-message validation against your staged files, scores the commit, and suggests a conventional commit message. Node 20+, works with npm, pnpm, yarn, and bun.
 
-<p align="center">
-  <img src="https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white" alt="TypeScript" />
-</p>
+## Install
 
-<p align="center">
-  <strong>Git commit quality CLI for pre-commit hooks, commit-msg validation, staged-file checks, and Husky workflows.</strong>
-</p>
-
----
-
-##  Overview
-
-`commit-quality-check` (`cq`) is a diff-aware Git commit quality CLI for pre-commit hooks, commit-msg validation, staged-file checks, and Husky git-hook workflows. It automates linting, formatting, quality checks, commit suggestions, and CI-friendly analysis so each staged change lands cleaner. The project is fully written in **TypeScript** with strict type checking.
-
-##  Features
-
-- **Zero Configuration**: Auto-detects your package manager (`npm`, `pnpm`, `yarn`, `bun`) and common quality scripts.
-- **Git Hooks Ready**: Works with Husky pre-commit and commit-msg hooks out of the box.
-- **Smart Dependency Suggestions**: If `eslint` or `prettier` are missing, the tool generates a report with the exact commands needed to install them.
-- **Flexible Commit Validation**: Supports both [Conventional Commits](https://www.conventionalcommits.org/) and [Gitmoji](https://gitmoji.dev/) (emoji-shortcodes like `:art:`) to keep your history clean.
-- **Secret Scanner**: Detects API keys, tokens, passwords before they get committed.
-- **Debug Artifact Scanner**: Catches `console.log` and `debugger` in staged script files.
-- **Dependencies Vulnerabilities**: Runs `npm audit` to check for vulnerabilities.
-- **Package Validation**: Runs `npm pack --dry-run` in full mode to catch packaging issues early.
-- **Diff-aware Risk Signals**: Detects removed tests from staged diff content, not only file names.
-- **Fast Performance**: Optimized for staged files to keep your development loop quick.
-- **Quality Reports**: Generates a detailed `quality-report.md` upon failure, explaining exactly what went wrong and how to fix it.
-- **Two Profiles**: `fast` (default) for staged checks + unit tests, `full` adds build, package validation, and Playwright e2e.
-
-##  Installation
-
-### Quick Start
-Install the tool and enable the hook:
- 
 ```bash
-npm install --save-dev commit-quality-check husky
+npm install --save-dev commit-quality-check
 npx cq enable
 ```
 
-Or with pnpm:
-```bash
-pnpm add -D commit-quality-check husky
-pnpm exec cq enable
-```
+(`pnpm add -D commit-quality-check && pnpm exec cq enable` for pnpm. Husky is optional — the generated hooks are self-contained.)
 
-## CI/CD
-```yaml
-- uses: monority/commit-quality-check@v3
-```
-See [GitHub Action](.github/actions/commit-quality-check/action.yml).
+`cq enable` writes the hooks and sets `core.hooksPath`. Every `git commit` then runs the checks and validates the message. Bypass with `git commit --no-verify` when needed.
 
-### GitLab CI
+## Commands
 
-```yaml
-include:
-  - project: 'monority/commit-quality-check'
-    file: '/templates/gitlab-ci.yml'
-    ref: v3.2.0
-```
+| Command                                                            | Alias     | Description                                                                                           |
+| :----------------------------------------------------------------- | :-------- | :---------------------------------------------------------------------------------------------------- |
+| `npx cq`                                                           | `m`       | Interactive menu                                                                                      |
+| `npx cq enable` / `disable`                                        | `e` / `d` | Manage the hooks                                                                                      |
+| `npx cq status`                                                    | `s`       | Hook state, enabled checks, score                                                                     |
+| `npx cq staged`                                                    | `f`       | Fast check on staged files                                                                            |
+| `npx cq check`                                                     | `c`       | Full check (build, pack, e2e)                                                                         |
+| `npx cq suggest`                                                   | `u`       | Suggest a commit header from staged changes                                                           |
+| `npx cq commit`                                                    | -         | Create the suggested commit (editable in a TTY)                                                       |
+| `npx cq config`                                                    | `g`       | Toggle individual checkers                                                                            |
+| `npx cq json-check [--full] [--reporters <list>] [--output <dir>]` | -         | CI payload: JSON on stdout, optional report files. Env: `CQ_PROFILE`, `CQ_REPORTERS`, `CQ_OUTPUT_DIR` |
+| `npx cq report [--reporters <list>]`                               | -         | Generate report files (cli, json, sarif, markdown)                                                    |
+| `npx cq commit-msg <file>`                                         | -         | Validate a commit message file (used by the hook)                                                     |
 
-See [templates/gitlab-ci.yml](./templates/gitlab-ci.yml) for full template.
+Also available: `toggle` (`t`), `auto-push` (`p`), `single` (`r`), `json` (`j`).
 
-### Azure Pipelines
+## Checks
 
-```yaml
-steps:
-  - script: |
-      npm install --save-dev commit-quality-check
-      npx cq json-check --profile fast --reporters cli,sarif
-    displayName: 'Run Commit Quality Check'
-```
+The `fast` profile (default) runs lint and format on staged files, secret and debug-artifact scans, dependency audit, typecheck, unit tests, and commit-message checks. `full` adds build, `npm pack --dry-run`, and Playwright e2e.
 
-See [templates/azure-pipelines.yml](./templates/azure-pipelines.yml) for full template.
+Commit messages follow [Conventional Commits](https://www.conventionalcommits.org/) or [Gitmoji](https://gitmoji.dev/) shortcodes. Risk analysis reads the staged diff, so removing tests inside a hunk raises the risk score even when file names alone look harmless.
+
+Quality scripts are auto-detected from `package.json` (`lint`, `typecheck`, `test`, `build`, `e2e` and variants). Missing tools are reported with the exact install command for your package manager.
 
 ## Configuration
-Create `commit-quality-check.yml` in your project root.
-See [CONFIGURATION.md](CONFIGURATION.md) for all options.
-
-##  AI Integration (Optional)
-
-Enhance commit suggestions with AI-powered alternatives.
-
-### Setup
-
-```bash
-# Choose your provider and set the API key
-export CQ_AI_PROVIDER=openai
-export CQ_AI_KEY=sk-...
-
-# Or for local AI with Ollama
-export CQ_AI_PROVIDER=ollama
-```
-
-### Supported Providers
-
-| Provider | Env Variable | Model Default |
-|----------|-------------|---------------|
-| OpenAI | `CQ_AI_KEY` or `OPENAI_API_KEY` | `gpt-4o-mini` |
-| Anthropic | `CQ_AI_KEY` or `ANTHROPIC_API_KEY` | `claude-sonnet-4-20250514` |
-| Ollama | (none, local) | `llama3` |
-
-### CLI Usage
-
-```bash
-cq --ai openai suggest
-cq --ai ollama staged
-```
-
-### YAML Configuration
-
-```yaml
-ai:
-  provider: openai
-  model: gpt-4o
-  temperature: 0.5
-  timeoutMs: 15000
-```
-
-> **Note**: AI is completely optional. Without configuration, the tool works exactly as before with zero overhead.
-
-## Usage & Commands
-
-Run `npx cq` to show interactive menu (arrow keys + enter):
-
-```
- COMMIT QUALITY CHECKER 
-
-  - Toggle hook ON
-    Toggle auto-push OFF
-    Configure checks
-    Run single check
-    Status
-    Suggest commit
-    Commit
-    Staged check
-    Full check
-    Quit
-
-Select  ENTER Confirm  Q Quit
-```
-
-Or use direct commands:
-
-| Command | Alias | Description |
-| :--- | :--- | :--- |
-| `npx cq` | - | Interactive menu |
-| `npx cq toggle` | `t` | Toggle pre-commit and commit-msg hooks |
-| `npx cq auto-push` | `p` | Toggle optional post-commit auto-push |
-| `npx cq config` | `g` | Open the checker toggle menu |
-| `npx cq single` | `r` | Pick and run one checker |
-| `npx cq enable` | `e` | Enable auto-check |
-| `npx cq disable` | `d` | Disable auto-check |
-| `npx cq status` | `s` | Show status |
-| `npx cq suggest` | `u` | Show suggested commit header from staged changes |
-| `npx cq json` | `j` | Print staged analysis, score, and suggestion as JSON |
-| `npx cq json-check [--full]` | - | Run fast or full checks and print JSON payload with checker results, duration, and optional report path for CI |
-| `npx cq commit` | - | Create git commit from suggested header; in TTY you can accept or edit message |
-| `npx cq staged` | `f` | Fast check (staged) |
-| `npx cq check` | `c` | Full check + e2e |
-| `npx cq commit-msg <file>` | - | Validate commit message hook file |
-
-### Using as Git Hook
-
-After enabling, `pre-commit` runs staged checks and `commit-msg` validates commit messages automatically on every `git commit`. To bypass (if needed):
-```bash
-git commit --no-verify -m "feat: ..."
-```
-
-### Why Hook Status Can Be BROKEN
-
-`npx cq status` shows `BROKEN` when CQ finds hook files, but the Git hook setup is incomplete or not managed by CQ.
-
-CQ expects all of these to be true:
-- `.husky/pre-commit` contains `npm exec -- cq staged`
-- `.husky/commit-msg` contains `npm exec -- cq commit-msg "$1"`
-- `git config core.hooksPath` points to managed Husky hooks path such as `.husky` or `.husky/_`
-
-Common causes:
-- hooks were created by an older hook setup version
-- `.husky/pre-commit` or `.husky/commit-msg` was edited manually
-- Husky exists, but Git still points to another hooks directory
-- only one of the two CQ hooks exists
-- another tool owns the same hook file
-
-Check the setup:
-
-```bash
-npx cq status
-git config --get core.hooksPath
-cat .husky/pre-commit
-cat .husky/commit-msg
-```
-
-Repair the CQ hooks:
-
-```bash
-npx cq enable
-```
-
-If you intentionally use custom hooks, keep the CQ commands inside them instead of replacing them.
-
-##  How It Works
-
-When running `cq check`, the tool runs these checkers:
-
-1. **Linting (ESLint)**: Runs `eslint --fix` on staged JS/TS files.
-2. **Formatting (Prettier)**: Runs `prettier --write` on staged files.
-3. **Secret Scanner**: Scans for API keys, tokens, passwords.
-4. **Debug Artifacts**: Scans staged JS/TS files for `console.log` and `debugger`.
-5. **Type Check**: Runs `typecheck`, `check-types`, or `types` if present.
-6. **Dependencies Vulnerabilities**: Runs `npm audit` to check vulnerabilities.
-7. **Test Suite**: Runs your test script (jest, vitest, etc.).
-8. **Build** (full profile only): Runs `build` or `compile` if present.
-9. **NPM Pack** (full profile only): Runs `npm pack --dry-run`.
-10. **Playwright Tests** (full profile only): Runs e2e tests.
-
-Commit message validation runs in the `commit-msg` hook via `npx cq commit-msg <file>`.
-
-### Auto-detected Scripts
-If no custom configuration is provided, `cq` looks for these scripts in your `package.json` (in order):
-- `lint`
-- `typecheck` | `check-types` | `types`
-- `test:unit` | `unit`
-- `test` | `test:ci`
-- `build` | `compile`
-- `test:e2e` | `e2e` | `playwright` | `test:playwright`
-
-##  Configuration
-
-You can override the auto-detection by adding a `gitQuality` object to your `package.json`:
 
 ```json
 {
   "gitQuality": {
-    "skip": ["Secret Scanner", "Dependencies Vulnerabilities"],
-    "ignore": ["dist/", "src/generated/", "fixtures/example.js"],
+    "skip": ["Dependencies Vulnerabilities"],
+    "ignore": ["dist/", "src/generated/", "*.snap"],
     "autoPush": false,
-    "risk": {
-      "failOn": "HIGH"
-    },
-    "staged": {
-      "prettier": true,
-      "eslint": true
-    }
+    "risk": { "failOn": "HIGH" },
+    "staged": { "prettier": true, "eslint": true }
   }
 }
 ```
 
-- `skip`: An array of checker names to skip (e.g., `"Secret Scanner"`, `"Dependencies Vulnerabilities"`).
-- `ignore`: Repo-relative files or folders to ignore during staged-file checks (e.g., `"dist/"`, `"src/generated/"`, `"fixtures/example.js"`, `"*.snap"`).
-- `autoPush`: When `true`, creates an optional `post-commit` hook that runs full checks and `git push` after a successful commit. Defaults to `false`.
-- `risk.failOn`: Optional risk gate threshold. Use `"LOW"`, `"MEDIUM"`, or `"HIGH"` to fail when computed commit risk reaches that level. Default is advisory-only.
-- `staged.prettier`: Enable/disable automatic Prettier fixing on staged files.
-- `staged.eslint`: Enable/disable automatic ESLint fixing on staged files.
+`skip` disables checkers, `ignore` excludes files from staged checks, `autoPush` adds a post-commit hook that runs full checks and pushes, `risk.failOn` fails the run at a given risk level. Rules, thresholds, and scoring weights live in `commit-quality-check.yml` — see [CONFIGURATION.md](CONFIGURATION.md).
 
-Risk analysis is now diff-aware for test removals. Deleting test files or removing `describe` / `it` / `test` / `expect` lines from staged hunks raises commit risk even when staged file names alone would not show it.
+Silence a warning on one line with a `// cq-disable secret` or `// cq-disable debug` comment.
 
-The interactive menu can also toggle each checker on or off and save the result back into `gitQuality.skip`.
+## CI
 
-### Ignoring Secrets
+GitHub Actions:
 
-To ignore secrets in specific lines, add a comment:
-```js
-// cq-disable secret
-const mySecret = "sk-123456"; // won't trigger warning
+```yaml
+- uses: monority/commit-quality-check@v3
 ```
 
-### Ignoring Debug Artifacts
+GitLab and Azure templates are in [templates/](./templates). On failure a `quality-report.md` is written with the results and the fix for each check.
 
-To ignore a `console.log` or `debugger` line intentionally:
-```js
-// cq-disable debug
-console.log("intentional debug output");
-```
+## Troubleshooting hooks
 
-##  Quality Reports
+`cq status` shows `BROKEN` when hook files exist but the setup is incomplete — usually an older hook version, a manual edit, or another tool owning the files. Run `npx cq enable` to regenerate them. CQ expects `npm|pnpm|yarn|bun exec -- cq staged` in `.husky/pre-commit` and `core.hooksPath` pointing to `.husky`.
 
-When a check fails or a dependency is missing, a `quality-report.md` is generated in the project root. This report includes:
-- **Results Table**: A summary of which checks passed, failed, or were skipped.
-- **Diff Analysis**: Staged file counts, line stats, changed areas, and removed-test signals.
-- **How to Fix**: Step-by-step instructions for fixing failed quality checks.
-- **Setup Suggestions**: Direct installation commands if recommended tools (like ESLint) are not found.
-
----
-
-## API Documentation
-
-Generated API documentation is available via TypeDoc:
+## Optional AI suggestions
 
 ```bash
-npm run docs
+export CQ_AI_PROVIDER=openai
+export CQ_AI_KEY=sk-...
+cq --ai openai suggest
 ```
 
-Output: `docs/api/index.html`
+OpenAI, Anthropic, and Ollama are supported (see the table in [CONFIGURATION.md](CONFIGURATION.md) or the `ai` key of the YAML config). Without configuration this stays off.
 
-## Repository
+## License
 
-[https://github.com/monority/commit-quality-check](https://github.com/monority/commit-quality-check)
-
+[MIT](./LICENSE)

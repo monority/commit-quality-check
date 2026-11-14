@@ -12,11 +12,11 @@ export function normalizeGitQualityConfig(config: Record<string, unknown> = {}):
   const eslintVal = staged?.eslint;
   return {
     staged: {
-      prettier: (prettierVal === undefined || prettierVal === null) ? true : Boolean(prettierVal),
-      eslint: (eslintVal === undefined || eslintVal === null) ? true : Boolean(eslintVal),
+      prettier: prettierVal === undefined || prettierVal === null ? true : Boolean(prettierVal),
+      eslint: eslintVal === undefined || eslintVal === null ? true : Boolean(eslintVal),
     },
-    skip: Array.isArray(config.skip) ? config.skip as string[] : [],
-    ignore: Array.isArray(config.ignore) ? config.ignore as string[] : [],
+    skip: Array.isArray(config.skip) ? (config.skip as string[]) : [],
+    ignore: Array.isArray(config.ignore) ? (config.ignore as string[]) : [],
     autoPush: config.autoPush === true,
     risk: {
       failOn: normalizeRiskFailOn((config.risk as Record<string, unknown> | undefined)?.failOn),

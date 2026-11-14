@@ -15,6 +15,7 @@ function runCli(args: string[], opts: Options = {}) {
   // Use NODE_OPTIONS so --import is processed before cwd-relative resolution
   const env = {
     ...process.env,
+    ...((opts.env as Record<string, string> | undefined) ?? {}),
     NODE_OPTIONS: `--import ${tsxLoader}`,
   };
   return execa("node", [cliSource, ...args], { ...opts, env });
@@ -25,10 +26,7 @@ test("enable writes husky hooks and configures git hooksPath", async () => {
 
   try {
     await execa("git", ["init"], { cwd: root });
-    await writeFile(
-      join(root, "package.json"),
-      JSON.stringify({ name: "tmp", version: "1.0.0" }),
-    );
+    await writeFile(join(root, "package.json"), JSON.stringify({ name: "tmp", version: "1.0.0" }));
 
     await runCli(["enable"], { cwd: root });
 
@@ -37,11 +35,9 @@ test("enable writes husky hooks and configures git hooksPath", async () => {
     const postCommitExists = await access(join(root, ".husky", "post-commit"))
       .then(() => true)
       .catch(() => false);
-    const { stdout: hooksPath } = await execa(
-      "git",
-      ["config", "--get", "core.hooksPath"],
-      { cwd: root },
-    );
+    const { stdout: hooksPath } = await execa("git", ["config", "--get", "core.hooksPath"], {
+      cwd: root,
+    });
 
     assert.match(preCommit, /npm exec -- cq staged/);
     assert.match(commitMsg, /npm exec -- cq commit-msg "\$1"/);
@@ -57,10 +53,7 @@ test("disable removes managed hooksPath", async () => {
 
   try {
     await execa("git", ["init"], { cwd: root });
-    await writeFile(
-      join(root, "package.json"),
-      JSON.stringify({ name: "tmp", version: "1.0.0" }),
-    );
+    await writeFile(join(root, "package.json"), JSON.stringify({ name: "tmp", version: "1.0.0" }));
 
     await runCli(["enable"], { cwd: root });
     await runCli(["disable"], { cwd: root });
@@ -81,10 +74,7 @@ test("enable removes legacy auto-push hook", async () => {
 
   try {
     await execa("git", ["init"], { cwd: root });
-    await writeFile(
-      join(root, "package.json"),
-      JSON.stringify({ name: "tmp", version: "1.0.0" }),
-    );
+    await writeFile(join(root, "package.json"), JSON.stringify({ name: "tmp", version: "1.0.0" }));
     await mkdir(join(root, ".husky"));
     await writeFile(
       join(root, ".husky", "post-commit"),
@@ -108,10 +98,7 @@ test("enable removes husky-style auto-push hook", async () => {
 
   try {
     await execa("git", ["init"], { cwd: root });
-    await writeFile(
-      join(root, "package.json"),
-      JSON.stringify({ name: "tmp", version: "1.0.0" }),
-    );
+    await writeFile(join(root, "package.json"), JSON.stringify({ name: "tmp", version: "1.0.0" }));
     await mkdir(join(root, ".husky"));
     await writeFile(
       join(root, ".husky", "post-commit"),
@@ -140,10 +127,7 @@ test("auto-push command toggles post-commit hook and config", async () => {
 
   try {
     await execa("git", ["init"], { cwd: root });
-    await writeFile(
-      join(root, "package.json"),
-      JSON.stringify({ name: "tmp", version: "1.0.0" }),
-    );
+    await writeFile(join(root, "package.json"), JSON.stringify({ name: "tmp", version: "1.0.0" }));
 
     await runCli(["auto-push"], { cwd: root });
 
@@ -172,10 +156,7 @@ test("direct status command exits without pause prompt", async () => {
 
   try {
     await execa("git", ["init"], { cwd: root });
-    await writeFile(
-      join(root, "package.json"),
-      JSON.stringify({ name: "tmp", version: "1.0.0" }),
-    );
+    await writeFile(join(root, "package.json"), JSON.stringify({ name: "tmp", version: "1.0.0" }));
 
     const result = await runCli(["status"], {
       cwd: root,
@@ -198,10 +179,7 @@ test("status shows staged analysis summary when files are staged", async () => {
     await execa("git", ["config", "user.email", "cq@example.com"], { cwd: root });
     await execa("git", ["config", "user.name", "CQ"], { cwd: root });
     await mkdir(join(root, "src"));
-    await writeFile(
-      join(root, "package.json"),
-      JSON.stringify({ name: "tmp", version: "1.0.0" }),
-    );
+    await writeFile(join(root, "package.json"), JSON.stringify({ name: "tmp", version: "1.0.0" }));
     await writeFile(join(root, "src", "auth.test.js"), "console.log('ok');\n");
     await execa("git", ["add", "."], { cwd: root });
 
@@ -226,13 +204,16 @@ test("status accepts husky underscore hooksPath as managed", async () => {
 
   try {
     await execa("git", ["init"], { cwd: root });
-    await writeFile(
-      join(root, "package.json"),
-      JSON.stringify({ name: "tmp", version: "1.0.0" }),
-    );
+    await writeFile(join(root, "package.json"), JSON.stringify({ name: "tmp", version: "1.0.0" }));
     await mkdir(join(root, ".husky"));
-    await writeFile(join(root, ".husky", "pre-commit"), "#!/usr/bin/env sh\nnpm exec -- cq staged\n");
-    await writeFile(join(root, ".husky", "commit-msg"), "#!/usr/bin/env sh\nnpm exec -- cq commit-msg \"$1\"\n");
+    await writeFile(
+      join(root, ".husky", "pre-commit"),
+      "#!/usr/bin/env sh\nnpm exec -- cq staged\n",
+    );
+    await writeFile(
+      join(root, ".husky", "commit-msg"),
+      '#!/usr/bin/env sh\nnpm exec -- cq commit-msg "$1"\n',
+    );
     await execa("git", ["config", "core.hooksPath", ".husky/_"], { cwd: root });
 
     const result = await runCli(["status"], {
@@ -256,10 +237,7 @@ test("suggest prints suggested commit for staged files", async () => {
     await execa("git", ["config", "user.email", "cq@example.com"], { cwd: root });
     await execa("git", ["config", "user.name", "CQ"], { cwd: root });
     await mkdir(join(root, "src"));
-    await writeFile(
-      join(root, "package.json"),
-      JSON.stringify({ name: "tmp", version: "1.0.0" }),
-    );
+    await writeFile(join(root, "package.json"), JSON.stringify({ name: "tmp", version: "1.0.0" }));
     await execa("git", ["add", "package.json"], { cwd: root });
     await execa("git", ["commit", "-m", "chore: init"], { cwd: root });
     await writeFile(join(root, "src", "auth.js"), "export const login = true;\n");
@@ -287,10 +265,7 @@ test("commit creates git commit from suggested header", async () => {
     await execa("git", ["config", "user.email", "cq@example.com"], { cwd: root });
     await execa("git", ["config", "user.name", "CQ"], { cwd: root });
     await mkdir(join(root, "src"));
-    await writeFile(
-      join(root, "package.json"),
-      JSON.stringify({ name: "tmp", version: "1.0.0" }),
-    );
+    await writeFile(join(root, "package.json"), JSON.stringify({ name: "tmp", version: "1.0.0" }));
     await execa("git", ["add", "package.json"], { cwd: root });
     await execa("git", ["commit", "-m", "chore: init"], { cwd: root });
     await writeFile(join(root, "src", "auth.js"), "export const login = true;\n");
@@ -319,10 +294,7 @@ test("commit accepts explicit message override", async () => {
     await execa("git", ["config", "user.email", "cq@example.com"], { cwd: root });
     await execa("git", ["config", "user.name", "CQ"], { cwd: root });
     await mkdir(join(root, "src"));
-    await writeFile(
-      join(root, "package.json"),
-      JSON.stringify({ name: "tmp", version: "1.0.0" }),
-    );
+    await writeFile(join(root, "package.json"), JSON.stringify({ name: "tmp", version: "1.0.0" }));
     await execa("git", ["add", "package.json"], { cwd: root });
     await execa("git", ["commit", "-m", "chore: init"], { cwd: root });
     await writeFile(join(root, "src", "auth.js"), "export const login = true;\n");
@@ -350,10 +322,7 @@ test("commit fails when no staged files exist", async () => {
     await execa("git", ["init"], { cwd: root });
     await execa("git", ["config", "user.email", "cq@example.com"], { cwd: root });
     await execa("git", ["config", "user.name", "CQ"], { cwd: root });
-    await writeFile(
-      join(root, "package.json"),
-      JSON.stringify({ name: "tmp", version: "1.0.0" }),
-    );
+    await writeFile(join(root, "package.json"), JSON.stringify({ name: "tmp", version: "1.0.0" }));
 
     const result = await runCli(["commit"], {
       cwd: root,
@@ -375,10 +344,7 @@ test("json prints staged analysis payload", async () => {
     await execa("git", ["config", "user.email", "cq@example.com"], { cwd: root });
     await execa("git", ["config", "user.name", "CQ"], { cwd: root });
     await mkdir(join(root, "src"));
-    await writeFile(
-      join(root, "package.json"),
-      JSON.stringify({ name: "tmp", version: "1.0.0" }),
-    );
+    await writeFile(join(root, "package.json"), JSON.stringify({ name: "tmp", version: "1.0.0" }));
     await execa("git", ["add", "package.json"], { cwd: root });
     await execa("git", ["commit", "-m", "chore: init"], { cwd: root });
     await writeFile(join(root, "src", "auth.js"), "export const login = true;\n");
@@ -405,10 +371,7 @@ test("json prints empty payload when nothing is staged", async () => {
 
   try {
     await execa("git", ["init"], { cwd: root });
-    await writeFile(
-      join(root, "package.json"),
-      JSON.stringify({ name: "tmp", version: "1.0.0" }),
-    );
+    await writeFile(join(root, "package.json"), JSON.stringify({ name: "tmp", version: "1.0.0" }));
 
     const result = await runCli(["json"], {
       cwd: root,
@@ -445,7 +408,7 @@ test("json-check prints checker results payload and succeeds when checks pass", 
           skip: ["Playwright Tests"],
         },
         scripts: {
-          test: "node --eval \"process.exit(0)\"",
+          test: 'node --eval "process.exit(0)"',
         },
       }),
     );
@@ -480,10 +443,7 @@ test("json-check returns non-zero and JSON payload when checks fail", async () =
     await execa("git", ["init"], { cwd: root });
     await execa("git", ["config", "user.email", "cq@example.com"], { cwd: root });
     await execa("git", ["config", "user.name", "CQ"], { cwd: root });
-    await writeFile(
-      join(root, "package.json"),
-      JSON.stringify({ name: "tmp", version: "1.0.0" }),
-    );
+    await writeFile(join(root, "package.json"), JSON.stringify({ name: "tmp", version: "1.0.0" }));
     await execa("git", ["add", "package.json"], { cwd: root });
     await execa("git", ["commit", "-m", "chore: init"], { cwd: root });
     await writeFile(join(root, "script.js"), "console.log('debug');\n");
@@ -523,7 +483,7 @@ test("json-check supports full profile flag", async () => {
           skip: ["Playwright Tests"],
         },
         scripts: {
-          test: "node --eval \"process.exit(0)\"",
+          test: 'node --eval "process.exit(0)"',
         },
       }),
     );
@@ -544,6 +504,164 @@ test("json-check supports full profile flag", async () => {
     assert.equal(typeof payload.durationMs, "number");
     assert.equal(payload.reportPath, null);
     assert.ok(payload.results.length > 0);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("json-check parses --profile/--reporters/--output and keeps stdout as pure JSON", async () => {
+  const root = await mkdtemp(join(tmpdir(), "cq-cli-json-check-flags-"));
+
+  try {
+    await execa("git", ["init"], { cwd: root });
+    await execa("git", ["config", "user.email", "cq@example.com"], { cwd: root });
+    await execa("git", ["config", "user.name", "CQ"], { cwd: root });
+    await mkdir(join(root, "src"));
+    await writeFile(
+      join(root, "package.json"),
+      JSON.stringify({
+        name: "tmp",
+        version: "1.0.0",
+        gitQuality: {
+          skip: ["Playwright Tests"],
+        },
+        scripts: {
+          test: 'node --eval "process.exit(0)"',
+        },
+      }),
+    );
+    await execa("git", ["add", "package.json"], { cwd: root });
+    await execa("git", ["commit", "-m", "chore: init"], { cwd: root });
+    await writeFile(join(root, "src", "auth.test.js"), "export const ok = true;\n");
+    await execa("git", ["add", "src/auth.test.js"], { cwd: root });
+
+    const result = await runCli(
+      ["json-check", "--profile", "fast", "--reporters", "sarif,json", "--output", "reports"],
+      { cwd: root, reject: false },
+    );
+    // stdout must stay parseable JSON (no "Target project:" or CLI noise)
+    const payload = JSON.parse(result.stdout);
+
+    assert.equal(result.exitCode, 0);
+    assert.equal(payload.profile, "fast");
+    assert.equal(payload.scoreSummary?.globalScore !== undefined, true);
+    assert.ok(Array.isArray(payload.reportFiles));
+    assert.ok(payload.reportFiles.some((file: string) => file.endsWith("report.sarif")));
+    assert.ok(payload.reportFiles.some((file: string) => file.endsWith("report.json")));
+    assert.ok(result.stdout.indexOf("Target project:") === -1);
+
+    const sarif = JSON.parse(await readFile(join(root, "reports", "report.sarif"), "utf8"));
+    assert.equal(sarif.version, "2.1.0");
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("json-check reads CQ_PROFILE and CQ_REPORTERS env vars", async () => {
+  const root = await mkdtemp(join(tmpdir(), "cq-cli-json-check-env-"));
+
+  try {
+    await execa("git", ["init"], { cwd: root });
+    await execa("git", ["config", "user.email", "cq@example.com"], { cwd: root });
+    await execa("git", ["config", "user.name", "CQ"], { cwd: root });
+    await mkdir(join(root, "src"));
+    await writeFile(
+      join(root, "package.json"),
+      JSON.stringify({
+        name: "tmp",
+        version: "1.0.0",
+        gitQuality: {
+          skip: ["Playwright Tests"],
+        },
+        scripts: {
+          test: 'node --eval "process.exit(0)"',
+        },
+      }),
+    );
+    await execa("git", ["add", "package.json"], { cwd: root });
+    await execa("git", ["commit", "-m", "chore: init"], { cwd: root });
+    await writeFile(join(root, "src", "auth.test.js"), "export const ok = true;\n");
+    await execa("git", ["add", "src/auth.test.js"], { cwd: root });
+
+    const result = await runCli(["json-check"], {
+      cwd: root,
+      reject: false,
+      env: {
+        ...process.env,
+        CQ_PROFILE: "full",
+        CQ_REPORTERS: "json",
+        CQ_OUTPUT_DIR: "reports",
+      },
+    });
+    const payload = JSON.parse(result.stdout);
+
+    assert.equal(result.exitCode, 0);
+    assert.equal(payload.profile, "full");
+    assert.ok(Array.isArray(payload.reportFiles));
+    assert.ok(payload.reportFiles.some((file: string) => file.endsWith("report.json")));
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("enable generates pnpm hooks when pnpm-lock.yaml is present", async () => {
+  const root = await mkdtemp(join(tmpdir(), "cq-cli-hooks-pnpm-"));
+
+  try {
+    await execa("git", ["init"], { cwd: root });
+    await writeFile(join(root, "package.json"), JSON.stringify({ name: "tmp", version: "1.0.0" }));
+    await writeFile(join(root, "pnpm-lock.yaml"), "lockfileVersion: '9.0'\n");
+
+    await runCli(["enable"], { cwd: root });
+
+    const preCommit = await readFile(join(root, ".husky", "pre-commit"), "utf8");
+    const commitMsg = await readFile(join(root, ".husky", "commit-msg"), "utf8");
+
+    assert.match(preCommit, /pnpm exec -- cq staged/);
+    assert.match(commitMsg, /pnpm exec -- cq commit-msg "\$1"/);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("getHookState accepts hooks written for any package manager", async () => {
+  const root = await mkdtemp(join(tmpdir(), "cq-cli-hooks-any-pm-"));
+
+  try {
+    await execa("git", ["init"], { cwd: root });
+    await writeFile(join(root, "package.json"), JSON.stringify({ name: "tmp", version: "1.0.0" }));
+    // Hook written manually with pnpm (e.g. created before this project switched managers)
+    await mkdir(join(root, ".husky"), { recursive: true });
+    await writeFile(
+      join(root, ".husky", "pre-commit"),
+      "#!/usr/bin/env sh\npnpm exec -- cq staged\n",
+    );
+    await writeFile(
+      join(root, ".husky", "commit-msg"),
+      '#!/usr/bin/env sh\npnpm exec -- cq commit-msg "$1"\n',
+    );
+    await execa("git", ["config", "core.hooksPath", ".husky"], { cwd: root });
+
+    await runCli(["status"], { cwd: root });
+
+    const preCommit = await readFile(join(root, ".husky", "pre-commit"), "utf8");
+    assert.match(preCommit, /pnpm exec -- cq staged/);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("cq without arguments prints a usage hint in non-TTY", async () => {
+  const root = await mkdtemp(join(tmpdir(), "cq-cli-menu-nontty-"));
+
+  try {
+    await execa("git", ["init"], { cwd: root });
+    await writeFile(join(root, "package.json"), JSON.stringify({ name: "tmp", version: "1.0.0" }));
+
+    const result = await runCli([], { cwd: root, input: "q\n", reject: false });
+
+    assert.match(result.stdout, /Interactive menu requires a TTY/);
+    assert.match(result.stdout, /cq status/);
   } finally {
     await rm(root, { recursive: true, force: true });
   }

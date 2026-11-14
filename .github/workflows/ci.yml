@@ -14,7 +14,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node-version: [22, 23, 24]
+        node-version: [20, 22, 24]
 
     steps:
       - name: Checkout
@@ -22,9 +22,6 @@ jobs:
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: 9
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -33,6 +30,12 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Format check
+        run: npm run format:check
 
       - name: Type check
         run: npm run typecheck
@@ -43,12 +46,6 @@ jobs:
       - name: Run tests
         run: npm test
 
-      - name: Upload test results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-results-${{ matrix.node-version }}
-          path: |
-            cq-output.json
-            report.sarif
-          retention-days: 7
+      - name: Coverage
+        if: matrix.node-version == 24
+        run: npm run test:coverage

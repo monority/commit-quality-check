@@ -110,3 +110,48 @@ test("ignores configured staged directory", async () => {
     await rm(root, { recursive: true, force: true });
   }
 });
+
+test("cq-disable debug on the previous line silences the finding", async () => {
+  const root = await mkdtemp(join(tmpdir(), "cq-debug-disable-next-"));
+  const checker = new DebugArtifactsChecker();
+
+  try {
+    await execa("git", ["init"], { cwd: root });
+    await execa("git", ["config", "user.email", "cq@example.com"], { cwd: root });
+    await execa("git", ["config", "user.name", "CQ"], { cwd: root });
+    await writeFile(join(root, "package.json"), JSON.stringify({ name: "tmp", version: "1.0.0" }));
+    await writeFile(join(root, "index.js"), "// cq-disable debug\nconsole.log('intentional');");
+    await execa("git", ["add", "."], { cwd: root });
+
+    const result = await checker.run({ root, packageManager: "npm" } as ProjectContext);
+
+    assert.equal(result.success, true);
+    assert.equal(result.message, "No debug artifacts found");
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("finding after an uncommented line is still reported", async () => {
+  const root = await mkdtemp(join(tmpdir(), "cq-debug-disable-gap-"));
+  const checker = new DebugArtifactsChecker();
+
+  try {
+    await execa("git", ["init"], { cwd: root });
+    await execa("git", ["config", "user.email", "cq@example.com"], { cwd: root });
+    await execa("git", ["config", "user.name", "CQ"], { cwd: root });
+    await writeFile(join(root, "package.json"), JSON.stringify({ name: "tmp", version: "1.0.0" }));
+    await writeFile(
+      join(root, "index.js"),
+      "// cq-disable debug\nconsole.log('silenced');\nconst a = 1;\nconsole.log('reported');",
+    );
+    await execa("git", ["add", "."], { cwd: root });
+
+    const result = await checker.run({ root, packageManager: "npm" } as ProjectContext);
+
+    assert.equal(result.success, false);
+    assert.match(result.details, /console\.log/);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});

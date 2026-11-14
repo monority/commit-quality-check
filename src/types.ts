@@ -56,11 +56,11 @@ export interface TransparentScore {
   weights: { message_quality: number; history_quality: number; workflow_quality: number };
 }
 
-export type TestsStatus = 'PRESENT' | 'MISSING' | 'REDUCED' | 'NOT_NEEDED';
-export type RiskLevel = 'LOW' | 'MEDIUM' | 'HIGH';
-export type CheckerCategory = 'message' | 'history' | 'workflow' | 'security' | 'quality';
-export type CheckerSeverity = 'info' | 'warning' | 'error';
-export type CheckStatus = 'pass' | 'fail' | 'skip';
+export type TestsStatus = "PRESENT" | "MISSING" | "REDUCED" | "NOT_NEEDED";
+export type RiskLevel = "LOW" | "MEDIUM" | "HIGH";
+export type CheckerCategory = "message" | "history" | "workflow" | "security" | "quality";
+export type CheckerSeverity = "info" | "warning" | "error";
+export type CheckStatus = "pass" | "fail" | "skip";
 
 export interface ScoreSummary {
   probableType: string;
@@ -114,4 +114,16 @@ export interface CheckerPlugin {
   category?: CheckerCategory;
   severity?: CheckerSeverity;
   checkers: () => unknown[];
+}
+
+export interface EngineOptions {
+  root?: string;
+  projectPackage?: Record<string, unknown>;
+  packageManager?: string;
+  stagedFiles?: string[];
+  stagedDiff?: string;
+  quiet?: boolean;
+  generateReport?: boolean;
+  onlyCheckNames?: string[];
+  [key: string]: unknown;
 }

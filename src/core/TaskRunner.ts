@@ -1,4 +1,4 @@
-import type { CheckResult } from '../types.js';
+import type { CheckResult } from "../types.js";
 
 export class TaskRunner {
   concurrency: number;
@@ -7,13 +7,19 @@ export class TaskRunner {
     this.concurrency = concurrency;
   }
 
-  async execute(tasks: Array<{ run: (...args: unknown[]) => Promise<unknown>; name: string }>, context: unknown): Promise<CheckResult[]> {
+  async execute(
+    tasks: Array<{ run: (...args: unknown[]) => Promise<unknown>; name: string }>,
+    context: unknown,
+  ): Promise<CheckResult[]> {
     const results = new Array<CheckResult>(tasks.length);
     let nextIndex = 0;
 
-    const runTask = async (task: { run: (...args: unknown[]) => Promise<unknown>; name: string }, index: number) => {
+    const runTask = async (
+      task: { run: (...args: unknown[]) => Promise<unknown>; name: string },
+      index: number,
+    ) => {
       try {
-        const result = await task.run(context) as Omit<CheckResult, 'name'>;
+        const result = (await task.run(context)) as Omit<CheckResult, "name">;
         results[index] = { name: task.name, ...result } as CheckResult;
       } catch (error) {
         const err = error as { message: string };

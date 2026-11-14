@@ -60,24 +60,31 @@ export async function readProjectPackage(root: string): Promise<Record<string, u
   return JSON.parse(raw) as Record<string, unknown>;
 }
 
+/** List staged files (added/copied/modified/renamed) in the repo at `root`. */
+export async function listStagedFiles(root: string): Promise<string[]> {
+  try {
+    const { stdout } = await execa(
+      "git",
+      ["diff", "--cached", "--name-only", "--diff-filter=ACMR"],
+      { cwd: root },
+    );
+    return stdout
+      .split("\n")
+      .map((file: string) => file.trim())
+      .filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+
 export function getPackageManagerInstallCommand(
   packageManager: string,
   packages: string[],
 ): { command: string; args: string[] } {
-  if (packageManager === "pnpm")
-    return { command: "pnpm", args: ["add", "-D", ...packages] };
-  if (packageManager === "yarn")
-    return { command: "yarn", args: ["add", "-D", ...packages] };
-  if (packageManager === "bun")
-    return { command: "bun", args: ["add", "-d", ...packages] };
+  if (packageManager === "pnpm") return { command: "pnpm", args: ["add", "-D", ...packages] };
+  if (packageManager === "yarn") return { command: "yarn", args: ["add", "-D", ...packages] };
+  if (packageManager === "bun") return { command: "bun", args: ["add", "-d", ...packages] };
   return { command: "npm", args: ["install", "-D", ...packages] };
-}
-
-export function getPackageManagerExecCommand(
-  packageManager: string,
-  args: string[],
-): { command: string; args: string[] } {
-  return { command: packageManager, args };
 }
 
 export async function ensurePackagesInstalled({
@@ -108,17 +115,10 @@ export async function ensurePackagesInstalled({
   if (promptedPackages.has(promptKey)) return projectPackage;
   promptedPackages.add(promptKey);
 
-  const shouldInstall = await confirmInstall(
-    packageManager,
-    missingPackages,
-    reason,
-  );
+  const shouldInstall = await confirmInstall(packageManager, missingPackages, reason);
   if (!shouldInstall) return projectPackage;
 
-  const { command, args } = getPackageManagerInstallCommand(
-    packageManager,
-    missingPackages,
-  );
+  const { command, args } = getPackageManagerInstallCommand(packageManager, missingPackages);
 
   console.log(`Installing missing package(s): ${missingPackages.join(", ")}`);
   await execa(command, args, { cwd: root, stdio: "inherit" });
@@ -131,10 +131,7 @@ async function confirmInstall(
   packages: string[],
   reason: string,
 ): Promise<boolean> {
-  const { command, args } = getPackageManagerInstallCommand(
-    packageManager,
-    packages,
-  );
+  const { command, args } = getPackageManagerInstallCommand(packageManager, packages);
   const installPreview = [command, ...args].join(" ");
 
   if (!input.isTTY || !output.isTTY) {
@@ -154,9 +151,6 @@ async function confirmInstall(
   }
 }
 
-export async function restageFiles(
-  files: string[],
-  root: string,
-): Promise<void> {
+export async function restageFiles(files: string[], root: string): Promise<void> {
   await execa("git", ["add", "-f", "--", ...files], { cwd: root, stdio: "inherit" });
 }

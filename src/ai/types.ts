@@ -1,15 +1,16 @@
-/** Providers supportés */
-export type AiProviderName = 'openai' | 'anthropic' | 'ollama';
+/** Supported providers */
+export type AiProviderName = "openai" | "anthropic" | "ollama";
 
-/** Erreurs spécifiques AI */
+/** AI-specific errors */
 export class AiError extends Error {
   constructor(
     message: string,
-    public readonly code: 'PROVIDER_DOWN' | 'RATE_LIMITED' | 'TIMEOUT' | 'UNAUTHORIZED' | 'NO_PROVIDER' | 'PARSE_ERROR',
+    public readonly code:
+      "PROVIDER_DOWN" | "RATE_LIMITED" | "TIMEOUT" | "UNAUTHORIZED" | "NO_PROVIDER" | "PARSE_ERROR",
     public readonly provider?: string,
   ) {
     super(message);
-    this.name = 'AiError';
+    this.name = "AiError";
   }
 }
 
@@ -30,12 +31,12 @@ export interface AiConfig {
   temperature?: number;
 }
 
-/** Interface du module provider (chargé dynamiquement) */
+/** Provider module interface (loaded dynamically) */
 export interface AiModule {
   suggest(context: AiSuggestionContext): Promise<AiSuggestion | null>;
 }
 
-/** Contexte passé au provider pour générer une suggestion */
+/** Context passed to the provider to generate a suggestion */
 export interface AiSuggestionContext {
   stagedFiles: string[];
   diffStats: { added: number; removed: number };

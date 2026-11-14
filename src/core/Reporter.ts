@@ -1,12 +1,20 @@
-import type { CheckResult, ScoreSummary, SuggestionSummary, DiffAnalysis } from '../types.js';
+import type { CheckResult, ScoreSummary, SuggestionSummary, DiffAnalysis } from "../types.js";
 import { writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { execa } from "execa";
+import { getProjectRoot } from "../utils/ProjectUtils.js";
 
 export class Reporter {
-  async generateReport(results: CheckResult[], options: { root?: string; analysis?: DiffAnalysis; scoreSummary?: ScoreSummary; suggestionSummary?: SuggestionSummary } = {}): Promise<string> {
+  async generateReport(
+    results: CheckResult[],
+    options: {
+      root?: string;
+      analysis?: DiffAnalysis;
+      scoreSummary?: ScoreSummary;
+      suggestionSummary?: SuggestionSummary;
+    } = {},
+  ): Promise<string> {
     try {
-      const root = options.root || await this.getProjectRoot();
+      const root = options.root || (await getProjectRoot());
       const reportPath = join(root, "quality-report.md");
       const content = this.buildReportContent(results, options);
 
@@ -18,12 +26,14 @@ export class Reporter {
     }
   }
 
-  async getProjectRoot(): Promise<string> {
-    const { stdout } = await execa("git", ["rev-parse", "--show-toplevel"]);
-    return stdout.trim();
-  }
-
-  buildReportContent(results: CheckResult[], options: { analysis?: DiffAnalysis; scoreSummary?: ScoreSummary; suggestionSummary?: SuggestionSummary } = {}): string {
+  buildReportContent(
+    results: CheckResult[],
+    options: {
+      analysis?: DiffAnalysis;
+      scoreSummary?: ScoreSummary;
+      suggestionSummary?: SuggestionSummary;
+    } = {},
+  ): string {
     const failures = results.filter((result) => !result.success);
     const setupSuggestions = results.filter((result) => result.success && result.suggestedFix);
     const generatedAt = new Date().toLocaleString();
@@ -225,7 +235,8 @@ export class Reporter {
 
   buildSetupSuggestionsSection(setupSuggestions: CheckResult[]): string {
     let content = "## Optional Setup Suggestions\n\n";
-    content += "These checks were skipped because the related tool is missing. Install them if you want stronger guardrails.\n\n";
+    content +=
+      "These checks were skipped because the related tool is missing. Install them if you want stronger guardrails.\n\n";
 
     setupSuggestions.forEach((suggestion) => {
       content += `### ${suggestion.name}\n\n`;

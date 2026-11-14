@@ -1,7 +1,7 @@
 import readline from "node:readline";
 import type { DiffAnalysis, ScoreSummary, SuggestionSummary } from "../../src/types.js";
 
-interface KeypressKey {
+export interface KeypressKey {
   name?: string;
   ctrl?: boolean;
   meta?: boolean;
@@ -93,12 +93,9 @@ export function drawChecklist(
     const isSelected = index === cursor;
     const arrow = isSelected ? `${C.yellow}>${C.reset}` : " ";
     const marker = item.enabled ? `${C.green}[x]${C.reset}` : `${C.red}[ ]${C.reset}`;
-    const profile = item.profile === "full"
-      ? `${C.yellow}(full)${C.reset}`
-      : `${C.green}(fast)${C.reset}`;
-    const label = isSelected
-      ? `${C.bright}${C.cyan}${item.name}${C.reset}`
-      : item.name;
+    const profile =
+      item.profile === "full" ? `${C.yellow}(full)${C.reset}` : `${C.green}(fast)${C.reset}`;
+    const label = isSelected ? `${C.bright}${C.cyan}${item.name}${C.reset}` : item.name;
     console.log(`  ${arrow} ${marker} ${label} ${profile}`);
   });
 
@@ -113,9 +110,7 @@ export async function drawMenu(): Promise<void> {
 
   options.forEach((opt, index) => {
     const isSelected = index === selected;
-    const label = isSelected
-      ? `${C.bright}${C.cyan}${opt.label}${C.reset}`
-      : opt.label;
+    const label = isSelected ? `${C.bright}${C.cyan}${opt.label}${C.reset}` : opt.label;
     let status = "";
 
     if (opt.action === "toggle") {
@@ -136,7 +131,6 @@ export async function drawMenu(): Promise<void> {
 }
 
 export async function runMenu(): Promise<string> {
-
   if (!process.stdin.isTTY || !process.stdout.isTTY) {
     console.log("Interactive menu requires a TTY terminal.");
     console.log("Use: cq status | cq suggest | cq json | cq json-check");
@@ -150,7 +144,6 @@ export async function runMenu(): Promise<string> {
     console.log("Use: cq status | cq suggest | cq json | cq json-check");
     process.exit(1);
   }
-
 
   return new Promise<string>((resolve) => {
     readline.emitKeypressEvents(process.stdin);

@@ -1,4 +1,4 @@
-import type { TransparentScore, CheckResult, DiffAnalysis } from '../types.js';
+import type { TransparentScore, CheckResult, DiffAnalysis } from "../types.js";
 
 export interface MarkdownReporterData {
   score?: TransparentScore;
@@ -7,7 +7,7 @@ export interface MarkdownReporterData {
 }
 
 /**
- * Markdown Reporter — Génère quality-report.md
+ * Markdown Reporter: writes quality-report.md
  */
 export class MarkdownReporter {
   report(data: MarkdownReporterData, _options: Record<string, unknown> = {}): string {
@@ -21,23 +21,23 @@ export class MarkdownReporter {
       for (const cat of data.score.categories || []) {
         md += `- **${cat.label}**: ${cat.score}/100 (weight: ${cat.weight}%)\n`;
         for (const p of cat.penalties || []) {
-          md += `  - ${p.reason} (${p.impact > 0 ? '+' : ''}${p.impact})\n`;
+          md += `  - ${p.reason} (${p.impact > 0 ? "+" : ""}${p.impact})\n`;
         }
       }
-      md += '\n';
+      md += "\n";
     }
 
-    // Résultats checkers
+    // Checker results
     if (data.checkerResults) {
       md += `## Results\n\n`;
       md += `| Checker | Status | Message |\n`;
       md += `| :--- | :--- | :--- |\n`;
       for (const r of data.checkerResults) {
-        const name = r.checker || r.name || 'unknown';
-        const status = r.status === 'pass' ? 'PASS' : r.status === 'skip' ? 'SKIP' : 'FAIL';
-        md += `| ${name} | ${status} | ${r.message || ''} |\n`;
+        const name = r.checker || r.name || "unknown";
+        const status = r.status === "pass" ? "PASS" : r.status === "skip" ? "SKIP" : "FAIL";
+        md += `| ${name} | ${status} | ${r.message || ""} |\n`;
       }
-      md += '\n';
+      md += "\n";
     }
 
     // Recommandations

@@ -1,0 +1,18 @@
+# Normalize line endings: index is always LF.
+* text=auto
+
+# Shell scripts and hook files must use LF everywhere.
+*.sh text eol=lf
+.husky/* text eol=lf
+cq text eol=lf
+
+# Windows-only files keep CRLF.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Binary assets.
+*.png -text
+*.jpg -text
+*.gif -text
+*.ico -text
+*.tgz -text

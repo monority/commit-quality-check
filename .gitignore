@@ -7,5 +7,7 @@ output/
 .tmp-*
 test-project/
 quality-report.md
+cq-output.json
+report.json
+report.sarif
 .env
-docs/api/

@@ -9,7 +9,7 @@ class MockAiProvider {
     if (!this.response) return null;
     return {
       alternatives: this.response.alternatives,
-      feedback: 'Mock AI feedback',
+      feedback: "Mock AI feedback",
       latencyMs: 42,
     };
   }
@@ -24,7 +24,12 @@ test("AI provider returns alternatives when configured", async () => {
     stagedFiles: ["src/auth.ts"],
     diffStats: { added: 10, removed: 0 },
     signals: { hasSourceChanges: true } as Record<string, boolean>,
-    currentSuggestion: { type: "feat", scope: "auth", description: "update auth", header: "feat(auth): update auth" },
+    currentSuggestion: {
+      type: "feat",
+      scope: "auth",
+      description: "update auth",
+      header: "feat(auth): update auth",
+    },
     rationale: ["Auth changes detected"],
   });
 

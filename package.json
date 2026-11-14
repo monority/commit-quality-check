@@ -1,80 +1,87 @@
 {
-    "name":  "commit-quality-check",
-    "version":  "3.1.15",
-    "description":  "Git commit quality CLI for pre-commit hooks, commit-msg validation, staged-file checks, and Husky git-hook workflows.",
-    "type":  "module",
-    "main":  "dist/scripts/cli.js",
-    "bin":  {
-                "commit-quality-check":  "dist/scripts/cli.js",
-                "cq":  "dist/scripts/cli.js"
-            },
-    "exports":  {
-                    ".":  "./dist/scripts/cli.js",
-                    "./src/*":  "./dist/src/*"
-                },
-    "files":  [
-                  "dist",
-                  "README.md",
-                  "LICENSE"
-              ],
-    "scripts":  {
-                    "build":  "node build.mjs",
-                    "typecheck":  "tsc --noEmit",
-                    "test":  "node --import tsx --test ./test/*.test.ts",
-                    "prepare":  "node -e \"try{require(\u0027child_process\u0027).execSync(\u0027husky\u0027,{stdio:\u0027inherit\u0027})}catch(e){}\""
-                },
-    "publishConfig":  {
-                          "access":  "public"
-                      },
-    "keywords":  [
-                     "git",
-                     "git-hooks",
-                     "pre-commit",
-                     "commit-msg",
-                     "husky",
-                     "conventional-commits",
-                     "code-quality",
-                     "staged-files",
-                     "commit-lint",
-                     "eslint",
-                     "prettier",
-                     "quality",
-                     "commit",
-                     "diff-aware",
-                     "guard"
-                 ],
-    "repository":  {
-                       "type":  "git",
-                       "url":  "git+https://github.com/monority/commit-quality-check.git"
-                   },
-    "homepage":  "https://github.com/monority/commit-quality-check#readme",
-    "bugs":  {
-                 "url":  "https://github.com/monority/commit-quality-check/issues"
-             },
-    "author":  "Ronan Chenu \u003cronan.chenu@example.com\u003e",
-    "license":  "MIT",
-    "dependencies":  {
-                         "execa":  "^9.5.2",
-                         "husky":  "^9.1.6",
-                         "js-yaml":  "^4.1.0"
-                     },
-    "devDependencies":  {
-                            "@types/js-yaml":  "^4.0.9",
-                            "@types/node":  "^22.10.0",
-                            "@typescript-eslint/eslint-plugin":  "^8.6.0",
-                            "@typescript-eslint/parser":  "^8.6.0",
-                            "eslint":  "^9.20.0",
-                            "tsx":  "^4.19.0",
-                            "typescript":  "^5.9.0"
-                        },
-    "engines":  {
-                    "node":  "\u003e=18"
-                },
-    "gitQuality":  {
-                       "skip":  [
-                                    "Debug Artifacts",
-                                    "Playwright Tests"
-                                ],
-                       "autoPush":  true
-                   }
+  "name": "commit-quality-check",
+  "version": "3.2.0",
+  "description": "Git commit quality CLI for pre-commit hooks, commit-msg validation, staged-file checks, and Husky git-hook workflows.",
+  "type": "module",
+  "main": "dist/scripts/cli.js",
+  "bin": {
+    "commit-quality-check": "dist/scripts/cli.js",
+    "cq": "dist/scripts/cli.js"
+  },
+  "exports": {
+    ".": "./dist/scripts/cli.js",
+    "./src/*": "./dist/src/*"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "node build.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test ./test/*.test.ts",
+    "prepare": "node -e \"try{require('child_process').execSync('husky',{stdio:'inherit'})}catch(e){}\"",
+    "format": "prettier --write \"src/**/*.ts\" \"scripts/**/*.ts\" \"test/**/*.ts\" \"build.mjs\"",
+    "format:check": "prettier --check \"src/**/*.ts\" \"scripts/**/*.ts\" \"test/**/*.ts\" \"build.mjs\"",
+    "lint": "eslint src scripts",
+    "test:coverage": "node --import tsx --test --experimental-test-coverage ./test/*.test.ts"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [
+    "git",
+    "git-hooks",
+    "pre-commit",
+    "commit-msg",
+    "husky",
+    "conventional-commits",
+    "code-quality",
+    "staged-files",
+    "commit-lint",
+    "eslint",
+    "prettier",
+    "quality",
+    "commit",
+    "diff-aware",
+    "guard"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/monority/commit-quality-check.git"
+  },
+  "homepage": "https://github.com/monority/commit-quality-check#readme",
+  "bugs": {
+    "url": "https://github.com/monority/commit-quality-check/issues"
+  },
+  "author": "Ronan Chenu",
+  "license": "MIT",
+  "dependencies": {
+    "execa": "^9.5.2",
+    "js-yaml": "^4.3.2"
+  },
+  "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^22.10.0",
+    "@typescript-eslint/eslint-plugin": "^8.6.0",
+    "@typescript-eslint/parser": "^8.6.0",
+    "eslint": "^9.20.0",
+    "husky": "^9.1.6",
+    "prettier": "^3.10.1",
+    "tsx": "^4.19.0",
+    "typescript": "^5.9.0"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "gitQuality": {
+    "skip": [
+      "Debug Artifacts",
+      "Playwright Tests",
+      "Commit Size"
+    ],
+    "autoPush": true
+  },
+  "packageManager": "pnpm@12.16.1"
 }
