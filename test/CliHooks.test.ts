@@ -684,3 +684,39 @@ test("enable works in a repo without package.json", async () => {
     await rm(root, { recursive: true, force: true });
   }
 });
+
+test("disable removes the auto-push post-commit hook too", async () => {
+  const root = await mkdtemp(join(tmpdir(), "cq-cli-hooks-autopush-"));
+
+  try {
+    await execa("git", ["init"], { cwd: root });
+    await writeFile(join(root, "package.json"), JSON.stringify({ name: "tmp", version: "1.0.0" }));
+
+    await runCli(["enable"], { cwd: root });
+    await runCli(["auto-push"], { cwd: root });
+    const postCommit = await readFile(join(root, ".husky", "post-commit"), "utf8");
+    assert.match(postCommit, /cq check/);
+
+    await runCli(["disable"], { cwd: root });
+
+    await access(join(root, ".husky", "pre-commit")).then(
+      () => {
+        throw new Error("pre-commit should be removed");
+      },
+      () => {},
+    );
+    await access(join(root, ".husky", "post-commit")).then(
+      () => {
+        throw new Error("post-commit should be removed");
+      },
+      () => {},
+    );
+    const { stdout: hooksPath } = await execa("git", ["config", "--get", "core.hooksPath"], {
+      cwd: root,
+      reject: false,
+    });
+    assert.equal(hooksPath.trim(), "");
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});

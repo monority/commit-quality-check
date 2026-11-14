@@ -235,7 +235,15 @@ export async function disableHook(): Promise<void> {
     // ignore
   }
 
+  const removedAutoPush = await removeAutoPushHooks();
   await unsetGitHooksPathIfManaged();
 
-  console.log(removed ? `${C.green}Hooks disabled${C.reset}` : `${C.yellow}Already off${C.reset}`);
+  console.log(
+    removed || removedAutoPush
+      ? `${C.green}Hooks disabled${C.reset}`
+      : `${C.yellow}Already off${C.reset}`,
+  );
+  if (removedAutoPush) {
+    console.log(`${C.yellow}Removed auto-push hook${C.reset}`);
+  }
 }

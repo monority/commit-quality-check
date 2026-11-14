@@ -1,5 +1,20 @@
 # Changelog
 
+## 3.2.2 - 2026-11-14
+
+### Changed
+
+- `cq disable` now also removes the auto-push `post-commit` hook (previously left behind), so the uninstall flow documented in the README removes everything CQ installed.
+
+### Added
+
+- README "Uninstall" section: full clean-removal steps including the `gitQuality` package.json key, config file, generated reports, and `.husky/` leftovers.
+
+### Validation
+
+- `pnpm test` — 217/217 pass
+- Functional test: enable + auto-push + disable removes pre-commit, commit-msg, and post-commit hooks and unsets `core.hooksPath`.
+
 ## 3.2.1 - 2026-11-14
 
 ### Fixed

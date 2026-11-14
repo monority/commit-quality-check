@@ -85,6 +85,22 @@ cq --ai openai suggest
 
 OpenAI, Anthropic, and Ollama are supported (see the table in [CONFIGURATION.md](CONFIGURATION.md) or the `ai` key of the YAML config). Without configuration this stays off.
 
+## Uninstall
+
+```bash
+npx cq disable                          # removes the managed hooks and unsets core.hooksPath
+npx cq auto-push                        # only if auto-push was ON (toggles it off and removes the hook)
+npm uninstall commit-quality-check
+```
+
+For a fully clean state, also remove what CQ may have left behind:
+
+- the `gitQuality` key in your `package.json` (checker skip list, `autoPush` state)
+- a `commit-quality-check.yml` at the project root, plus generated reports (`quality-report.md`, `report.sarif`, `report.json`)
+- the `.husky/` directory — only if you did not use it for your own hooks; otherwise delete just the `pre-commit`, `commit-msg`, and `post-commit` files CQ created and keep your own
+
+If you keep Husky for other hooks, keep your hook files and only remove the `cq` command lines inside them.
+
 ## License
 
 [MIT](./LICENSE)
