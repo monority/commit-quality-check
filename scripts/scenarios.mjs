@@ -84,7 +84,12 @@ const demo = createDemoProject();
 console.log(`Installing ${tarball}...`);
 shShell(`npm install --force --no-audit --no-fund "${join(repoRoot, tarball)}"`, demo);
 
-const staged = (demo, file, content) => writeFileSync(join(demo, file), content) || sh("git", ["add", file], demo);
+const staged = (demo, file, content) => {
+  const target = join(demo, file);
+  mkdirSync(dirname(target), { recursive: true });
+  writeFileSync(target, content);
+  sh("git", ["add", file], demo);
+};
 
 // --- Scenarios ---
 
@@ -135,14 +140,46 @@ scenario("8. cq-disable debug silences the finding", "pass", () => {
   assert(shOk("git", ["commit", "-q", "-m", "feat: add silenced log"], demo), "silenced debug rejected");
 });
 
-scenario("9. json-check prints a parseable CI payload", "pass", () => {
+function setIgnoreConfig(demo, ignore) {
+  const pkg = JSON.parse(readFileSync(join(demo, "package.json"), "utf8"));
+  pkg.gitQuality = { ...pkg.gitQuality, ignore };
+  writeFileSync(join(demo, "package.json"), JSON.stringify(pkg, null, 2));
+}
+
+scenario("9. gitQuality.ignore folder skips checks inside it", "pass", () => {
+  setIgnoreConfig(demo, ["vendor/"]);
+  staged(demo, "package.json", readFileSync(join(demo, "package.json"), "utf8"));
+  // cq-disable secret - fake key fixture used by this scenario
+  staged(demo, "vendor/key.js", 'const key = "sk-live-abcdef1234567890abcdef1234567890";\n');
+  assert(shOk("git", ["commit", "-q", "-m", "feat: vendor assets"], demo), "ignored folder not skipped");
+});
+
+scenario("10. gitQuality.ignore glob skips matching script files", "pass", () => {
+  setIgnoreConfig(demo, ["*.gen.js"]);
+  staged(demo, "package.json", readFileSync(join(demo, "package.json"), "utf8"));
+  staged(demo, "src/generated.gen.js", "function f() {\n  console.log('generated');\n}\n");
+  assert(shOk("git", ["commit", "-q", "-m", "feat: generated code"], demo), "ignored glob not skipped");
+});
+
+scenario("11. gitignored file in the working tree is never scanned", "pass", () => {
+  // Secret present in the working tree but gitignored and unstaged: only
+  // staged files are checked, so the commit must pass.
+  staged(demo, ".gitignore", "node_modules/\nreports/\n*.tgz\nsecret.local.js\n");
+  staged(demo, "src/clean.js", "export const c = () => 6;\n");
+  // cq-disable secret - fake key fixture used by this scenario
+  writeFileSync(join(demo, "secret.local.js"), 'const key = "sk-live-abcdef1234567890abcdef1234567890";\n');
+  assert(shOk("git", ["commit", "-q", "-m", "feat: clean change"], demo), "unstaged secret blocked the commit");
+  sh("git", ["reset", "-q"], demo);
+});
+
+scenario("12. json-check prints a parseable CI payload", "pass", () => {
   const out = JSON.parse(cli(demo, ["json-check"]));
   assert(typeof out.scoreSummary?.globalScore === "number", "no globalScore");
   assert(typeof out.allSuccess === "boolean", "no allSuccess");
   assert(Array.isArray(out.results) && out.results.length > 0, "no results");
 });
 
-scenario("10. json-check --reporters writes sarif and json files", "pass", () => {
+scenario("13. json-check --reporters writes sarif and json files", "pass", () => {
   staged(demo, "src/more.js", "export const m = () => 4;\n");
   const out = JSON.parse(cli(demo, ["json-check", "--reporters", "sarif,json", "--output", "reports"]));
   assert(existsSync(join(demo, "reports", "report.sarif")), "report.sarif missing");
@@ -151,7 +188,7 @@ scenario("10. json-check --reporters writes sarif and json files", "pass", () =>
   sh("git", ["reset", "-q"], demo);
 });
 
-scenario("11. auto-push pushes to a remote after commit", "pass", () => {
+scenario("14. auto-push pushes to a remote after commit", "pass", () => {
   const remote = join(dirname(demo), `cq-demo-remote-${Date.now()}.git`);
   createdDirs.push(remote);
   execSync(`git init -q --bare "${remote}"`);
@@ -167,14 +204,14 @@ scenario("11. auto-push pushes to a remote after commit", "pass", () => {
   assert(heads.includes("pushed by post-commit"), "remote did not receive the commit");
 });
 
-scenario("12. disable removes every managed hook", "pass", () => {
+scenario("15. disable removes every managed hook", "pass", () => {
   cli(demo, ["disable"]);
   assert(!existsSync(join(demo, ".husky", "pre-commit")), "pre-commit still present");
   assert(!existsSync(join(demo, ".husky", "post-commit")), "post-commit still present");
   assert(!shOk("git", ["config", "--get", "core.hooksPath"], demo), "hooksPath still set");
 });
 
-scenario("13. enable works without package.json", "pass", () => {
+scenario("16. enable works without package.json", "pass", () => {
   const bare = createDemoProject(false);
   // npm needs a manifest to install; the runtime target is a repo without one.
   writeFileSync(join(bare, "package.json"), "{}");
